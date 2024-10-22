@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import mysql.connector
+import MySQLdb
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -76,12 +78,14 @@ WSGI_APPLICATION = 'shoesite.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'your_data',
+        'ENGINE': 'django.db.backends.mysql',  # Database backend
+        'NAME': '------',          # Your MySQL database name
+        'USER': 'root',         # Your MySQL username
+        'PASSWORD': '------',     # Your MySQL password
+        'HOST': 'localhost',                   # Usually 'localhost' or IP of the database server
+        'PORT': '3306',                        # Default MySQL port is 3306
     }
 }
-
-
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
