@@ -1,4 +1,6 @@
-#!/Users/selimsidan/shoepify/myenv/bin/python
+#!/bin/sh
+'''exec' "/Users/cannarin/django backend/shoepify/myenv/bin/python3.13" "$0" "$@"
+' '''
 # -*- coding: utf-8 -*-
 import re
 import sys
