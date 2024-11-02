@@ -18,8 +18,14 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from .views import get_customer
+from . import views
+from .views import get_customer, create_customer, request_refund, approve_refund
 
 urlpatterns = [
     path('customer/<int:customer_id>/', get_customer, name='get_customer'),
+    path('customer/create/', create_customer, name='create_customer'),
+
+    # refund processes
+    path('request-refund/<int:order_item_id>/', views.request_refund, name='request_refund'),
+    path('approve-refund/<int:refund_id>/', views.approve_refund, name='approve_refund'),
 ]
