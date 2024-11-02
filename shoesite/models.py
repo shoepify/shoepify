@@ -1,13 +1,16 @@
 from django.db import models
 
 class Customer(models.Model):
-    customer_id = models.AutoField(primary_key=True)
+    customer_id = models.AutoField(primary_key=True)  # AutoField for auto-increment
     name = models.CharField(max_length=100)
     email = models.EmailField(max_length=100)
     password = models.CharField(max_length=100)
     home_address = models.CharField(max_length=255)
     billing_address = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15)
+
+    def __str__(self):
+        return self.name
 
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
