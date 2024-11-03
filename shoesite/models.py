@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Customer(models.Model):
@@ -17,6 +19,7 @@ class Customer(models.Model):
         return self.name
 
 class Product(models.Model):
+    # PRICE
     product_id = models.AutoField(primary_key=True)
     model = models.CharField(max_length=100)
     serial_number = models.CharField(max_length=100)
@@ -26,7 +29,20 @@ class Product(models.Model):
     distributor_info = models.CharField(max_length=100)
     description = models.TextField(default="")  # New description attribute (default = empty)
     # New size attribute
-    size = models.CharField(max_length=10)  # Adjust max_length as needed for shoe sizes
+    #size = models.CharField(max_length=10)  # Adjust max_length as needed for shoe sizes
+    base_price = models.DecimalField(max_digits=10, decimal_places=2) # new base price (without discount)
+    price = models.DecimalField(max_digits=10, decimal_places=2, editable=False)  # actual price with discount
+    discount = models.ForeignKey('Discount', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')  # ForeignKey to Discount
+
+    def save(self, *args, **kwargs):
+        # Calculate price based on discount, if any
+        if self.discount:
+            self.price = self.base_price * (1 - self.discount.discount_rate)
+        else:
+            self.price = self.base_price
+        super().save(*args, **kwargs)
+
+    
     
     # new attribute for popularity (for sorting)
     popularity_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
@@ -63,12 +79,15 @@ class Product(models.Model):
 
 class Wishlist(models.Model):
     wishlist_id = models.AutoField(primary_key=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    customer = models.OneToOneField(Customer, on_delete=models.CASCADE)  # customer has one wishlist
+    #customer = models.ForeignKey(Customer, on_delete=models.CASCADE) # old customer FK
 
 class WishlistItem(models.Model): # New  table (can be changed)
     wishlist_item_id = models.AutoField(primary_key=True)
     wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+
 
 
 class Order(models.Model):  
@@ -123,9 +142,10 @@ class ProductManager(models.Model):
 
 class Discount(models.Model):
     discount_id = models.AutoField(primary_key=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    # NO need for product as foreign key since discount can be for many products
+    #product = models.ForeignKey(Product, on_delete=models.CASCADE)
     discount_name = models.CharField(max_length=100)
-    discount_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_rate = models.DecimalField(max_digits=4, decimal_places=2)
     start_date = models.DateField()
     end_date = models.DateField()
 
