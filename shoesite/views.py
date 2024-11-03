@@ -1,7 +1,7 @@
 # views.py
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from .models import Customer, OrderItem, Refund
+from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem
 import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -58,6 +58,52 @@ def create_customer(request):
             return JsonResponse({'error': str(e)}, status=400)
 
     return JsonResponse({'error': 'Only POST requests are allowed'}, status=405)
+
+
+
+# wishlist related parts
+
+# add wishlist item (from product) to wishlist
+def add_to_wishlist(request, customer_id, product_id):
+    customer = get_object_or_404(Customer, customer_id=customer_id)
+    wishlist = customer.wishlist  # Access the wishlist directly due to OneToOne relationship
+    product = get_object_or_404(Product, product_id=product_id)
+
+    # Check if item already exists in wishlist
+    if not WishlistItem.objects.filter(wishlist=wishlist, product=product).exists():
+        WishlistItem.objects.create(wishlist=wishlist, product=product)
+        return JsonResponse({'status': 'Product added to wishlist'}, status=201)
+    return JsonResponse({'status': 'Product already in wishlist'}, status=200)
+
+# remove wishlist item from wishlist
+def remove_from_wishlist(request, customer_id, product_id):
+    customer = get_object_or_404(Customer, customer_id=customer_id)
+    wishlist = customer.wishlist
+    product = get_object_or_404(Product, product_id=product_id)
+
+    # Remove item from wishlist if it exists
+    WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()
+    return JsonResponse({'status': 'Product removed from wishlist'}, status=200)
+
+# view the wishlist
+
+def get_wishlist_json(request, customer_id):
+    customer = get_object_or_404(Customer, customer_id=customer_id)
+    wishlist = Wishlist.objects.filter(customer=customer).first()
+    
+    if wishlist:
+        wishlist_items = wishlist.wishlistitem_set.all()
+        items_data = [{'product_id': item.product.product_id, 'model': item.product.model} for item in wishlist_items]
+        return JsonResponse({'customer_id': customer.customer_id, 'wishlist_items': items_data})
+    else:
+        return JsonResponse({'customer_id': customer.customer_id, 'wishlist_items': []})
+
+        
+def view_wishlist(request, customer_id):
+    customer = get_object_or_404(Customer, customer_id=customer_id)
+    wishlist_items = WishlistItem.objects.filter(wishlist=customer.wishlist)
+    data = [{'product_id': item.product.product_id, 'model': item.product.model} for item in wishlist_items]
+    return JsonResponse({'wishlist': data}, status=200)
 
 
 # refund request (for customers)

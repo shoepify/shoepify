@@ -22,8 +22,16 @@ from . import views
 from .views import get_customer, create_customer, request_refund, approve_refund
 
 urlpatterns = [
-    path('customer/<int:customer_id>/', get_customer, name='get_customer'),
-    path('customer/create/', create_customer, name='create_customer'),
+    # customer processes
+    path('customer/<int:customer_id>/', views.get_customer, name='get_customer'),
+    path('customer/create/', views.create_customer, name='create_customer'),
+
+    # wishlist processes
+    path('wishlist/<str:customer_id>/', views.view_wishlist, name='view_wishlist'),
+    path('wishlist/add/<str:customer_id>/<int:product_id>/', views.add_to_wishlist, name='add_to_wishlist'),
+    path('wishlist/remove/<str:customer_id>/<int:product_id>/', views.remove_from_wishlist, name='remove_from_wishlist'),
+    path('wishlist/json/<str:customer_id>/', views.get_wishlist_json, name='get_wishlist_json'),
+
 
     # refund processes
     path('request-refund/<int:order_item_id>/', views.request_refund, name='request_refund'),

@@ -1,7 +1,29 @@
 # signals.py
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from .models import OrderItem, Rating, WishlistItem, Product
+from .models import OrderItem, Rating, WishlistItem, Product, Discount, ShoppingCart, Wishlist, Customer
+
+
+
+# Signal to create a shopping cart for each new customer
+@receiver(post_save, sender=Customer)
+def create_shopping_cart_for_customer(sender, instance, created, **kwargs):
+    if created:
+        ShoppingCart.objects.create(customer=instance)
+
+# Signal to create a wishlist for each new customer
+@receiver(post_save, sender=Customer)
+def create_wishlist_for_customer(sender, instance, created, **kwargs):
+    if created:
+        Wishlist.objects.create(customer=instance)
+
+# update price if discount changes
+@receiver(post_save, sender=Discount)
+@receiver(post_delete, sender=Discount)
+def update_related_products(sender, instance, **kwargs):
+    products = Product.objects.filter(discount=instance)
+    for product in products:
+        product.save()  
 
 @receiver(post_save, sender=OrderItem)
 def update_product_on_orderitem_change(sender, instance, created, **kwargs):
