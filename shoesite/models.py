@@ -5,7 +5,7 @@ from django.dispatch import receiver
 
 
 class Customer(models.Model):
-    customer_id = models.CharField(max_length=20, primary_key=True)  # Change to CharField and enforce uniqueness
+    customer_id = models.CharField(max_length=50, primary_key=True)  # Change to CharField and enforce uniqueness
     name = models.CharField(max_length=100)
     tax_id = models.CharField(max_length=20, unique=True)
     email = models.EmailField(max_length=100)
@@ -19,8 +19,7 @@ class Customer(models.Model):
         return self.name
 
 class Product(models.Model):
-    # PRICE
-    product_id = models.AutoField(primary_key=True)
+    product_id = models.CharField(max_length = 50, primary_key=True)
     model = models.CharField(max_length=100)
     serial_number = models.CharField(max_length=100)
     stock = models.IntegerField()
@@ -28,6 +27,8 @@ class Product(models.Model):
     warranty_status = models.CharField(max_length=50)
     distributor_info = models.CharField(max_length=100)
     description = models.TextField(default="")  # New description attribute (default = empty)
+    category = models.TextField(default="")  # New category attribute (default = empty)
+
     # New size attribute
     #size = models.CharField(max_length=10)  # Adjust max_length as needed for shoe sizes
     base_price = models.DecimalField(max_digits=10, decimal_places=2) # new base price (without discount)
@@ -113,7 +114,7 @@ class CartItem(models.Model):
     cart_item_id = models.AutoField(primary_key=True)
     cart = models.ForeignKey(ShoppingCart, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField()
+    quantity = models.PositiveIntegerField(default=1) 
 
 class Invoice(models.Model):
     invoice_id = models.AutoField(primary_key=True)
