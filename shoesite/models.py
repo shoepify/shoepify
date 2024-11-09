@@ -17,23 +17,27 @@ class Customer(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+
+
+
 
 class Product(models.Model):
-    product_id = models.CharField(max_length = 50, primary_key=True)
+    product_id = models.AutoField(primary_key=True)  # Correct definition
     model = models.CharField(max_length=100)
     serial_number = models.CharField(max_length=100)
     stock = models.IntegerField()
     inventory_to_stock = models.IntegerField()
     warranty_status = models.CharField(max_length=50)
     distributor_info = models.CharField(max_length=100)
-    description = models.TextField(default="")  # New description attribute (default = empty)
-    category = models.TextField(default="")  # New category attribute (default = empty)
-
-    # New size attribute
-    #size = models.CharField(max_length=10)  # Adjust max_length as needed for shoe sizes
-    base_price = models.DecimalField(max_digits=10, decimal_places=2) # new base price (without discount)
-    price = models.DecimalField(max_digits=10, decimal_places=2, editable=False)  # actual price with discount
-    discount = models.ForeignKey('Discount', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')  # ForeignKey to Discount
+    description = models.TextField(default='')
+    base_price = models.DecimalField(decimal_places=2, max_digits=10)
+    price = models.DecimalField(decimal_places=2, max_digits=10)
+    popularity_score = models.DecimalField(decimal_places=2, default=0.0, max_digits=5)
+    discount = models.ForeignKey(
+        'Discount', on_delete=models.SET_NULL, blank=True, null=True, related_name='products'
+    )
 
     def save(self, *args, **kwargs):
         # Calculate price based on discount, if any

@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'shoesite',
     'django_celery_beat',
-    'rest_framework'
+    'rest_framework',
+    'corsheaders',  
 ]
 
 MIDDLEWARE = [
@@ -58,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'shoesite.urls'
@@ -90,7 +92,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',  # Database backend
         'NAME': 'shoesite_db',          # Your MySQL database name
         'USER': 'root',         # Your MySQL username
-        'PASSWORD': 'Mj_rj-krr9',     # Your MySQL password
+        'PASSWORD': 'cansql824',     # Your MySQL password
         'HOST': 'localhost',                   # Usually 'localhost' or IP of the database server
         'PORT': '3306',                        # Default MySQL port is 3306
     }
@@ -141,3 +143,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the broker
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+CORS_ALLOW_ALL_ORIGINS = True

@@ -9,6 +9,10 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
+from django.http import JsonResponse
+from django.core.exceptions import ObjectDoesNotExist
+
+
 
 
 from .serializers import CustomerSerializer, WishlistSerializer, RefundSerializer, WishlistItemSerializer, ShoppingCartSerializer, CartItemSerializer, ProductSerializer
@@ -19,7 +23,7 @@ from .serializers import CustomerSerializer, WishlistSerializer, RefundSerialize
 def get_customer(request, customer_id):
     if request.method == 'GET':
         customer = get_object_or_404(Customer, customer_id=customer_id)
-        return JsonResponse({'customer_id': customer.customer_id, 'name': customer.name})
+        return JsonResponse({'customer_id': customer.customer_id, 'name': customer.name, 'tax_id': customer.tax_id, 'email': customer.email, 'home_address': customer.home_address, 'billing_address': customer.billing_address, 'phone_numer': customer.phone_number})
 
 @csrf_exempt
 def create_customer(request):
@@ -38,9 +42,14 @@ def create_customer(request):
 @csrf_exempt
 def list_products(request):
     if request.method == 'GET':
-        products = Product.objects.all()
-        serializer = ProductSerializer(products, many=True)
-        return JsonResponse(serializer.data, safe=False, status=200)
+        try:
+            products = Product.objects.all()
+            serializer = ProductSerializer(products, many=True)
+            return JsonResponse(serializer.data, safe=False, status=200)
+        except ObjectDoesNotExist:
+            return JsonResponse({'error': 'No products found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
 
 # Create a new product
 @csrf_exempt
@@ -59,7 +68,7 @@ def get_product(request, product_id):
     if request.method == 'GET':
         product = get_object_or_404(Product, product_id=product_id)
         serializer = ProductSerializer(product)
-        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        return JsonResponse({ 'product_id': product.product_id , 'model': product.model, 'serial_number': product.serial_number, 'stock': product.stock, 'warranty_status': product.warranty_status, 'distributor_info': product.distributor_info, 'description': product.description,'base_price': product.base_price, 'price': product.price})
 
 # Update an existing product
 @csrf_exempt  # Consider removing this if not needed
