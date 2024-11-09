@@ -1,4 +1,6 @@
 # views.py
+
+"""
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
 from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
@@ -209,4 +211,4 @@ def approve_refund(request, refund_id):
 
 # Make sure to define the URL patterns for these new views in your urls.py
 
-
+"""

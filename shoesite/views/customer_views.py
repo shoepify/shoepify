@@ -1,17 +1,12 @@
 # views.py
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, HttpResponse
-from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
 import json
-from django.shortcuts import render, get_object_or_404, redirect
-from django.utils import timezone
-from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, action
-from rest_framework.response import Response
-from rest_framework.parsers import JSONParser
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from shoesite.models import Customer  # Update to absolute import
 
 
-from .serializers import CustomerSerializer, WishlistSerializer, RefundSerializer, WishlistItemSerializer, ShoppingCartSerializer, CartItemSerializer, ProductSerializer
+from shoesite.serializers import CustomerSerializer, WishlistSerializer, RefundSerializer, WishlistItemSerializer, ShoppingCartSerializer, CartItemSerializer, ProductSerializer
 
 
 # CUSTOMER

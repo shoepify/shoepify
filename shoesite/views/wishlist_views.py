@@ -1,7 +1,7 @@
 # views.py
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
-from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
+from shoesite.models import Customer, Wishlist, WishlistItem, Product  # Update to absolute import
 import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
 
 
-from .serializers import CustomerSerializer, WishlistSerializer, RefundSerializer, WishlistItemSerializer, ShoppingCartSerializer, CartItemSerializer, ProductSerializer
+from shoesite.serializers import CustomerSerializer, WishlistSerializer, RefundSerializer, WishlistItemSerializer, ShoppingCartSerializer, CartItemSerializer, ProductSerializer
 
 
 # WISHLIST

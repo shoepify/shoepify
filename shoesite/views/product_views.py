@@ -1,17 +1,15 @@
 # views.py
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, HttpResponse
-from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
+from django.http import JsonResponse
+from shoesite.models import  Product
 import json
 from django.shortcuts import render, get_object_or_404, redirect
-from django.utils import timezone
-from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, action
-from rest_framework.response import Response
-from rest_framework.parsers import JSONParser
+from rest_framework import status
+from django.db.models import Q  # Add this to enable complex query filtering
 
 
-from .serializers import CustomerSerializer, WishlistSerializer, RefundSerializer, WishlistItemSerializer, ShoppingCartSerializer, CartItemSerializer, ProductSerializer
+
+from shoesite.serializers import CustomerSerializer, WishlistSerializer, RefundSerializer, WishlistItemSerializer, ShoppingCartSerializer, CartItemSerializer, ProductSerializer
 
 # PRODUCT
 # List all products
@@ -21,8 +19,9 @@ def list_products(request):
         products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
         return JsonResponse(serializer.data, safe=False, status=200)
+    
 
-# Create a new product
+# Create a new products
 @csrf_exempt
 def create_product(request):
     if request.method == 'POST':
@@ -32,6 +31,7 @@ def create_product(request):
             product = serializer.save()
             return JsonResponse({'message': 'Product created successfully', 'product_id': product.product_id}, status=status.HTTP_201_CREATED)
         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 # Retrieve a product by ID
 @csrf_exempt
@@ -68,3 +68,17 @@ def delete_product(request, product_id):
         product = get_object_or_404(Product, product_id=product_id)
         product.delete()
         return JsonResponse({'message': 'Product deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+
+def search_products(request):
+    query = request.GET.get('q', '')
+    if not query:
+        return JsonResponse({"error": "Search query parameter 'q' is required"}, status=400)
+
+    # Perform case-insensitive search on 'name' and 'description'
+    products = Product.objects.filter(
+        Q(name__icontains=query) | Q(description__icontains=query)
+    )
+
+    # Serialize the results
+    serializer = ProductSerializer(products, many=True)
+    return JsonResponse(serializer.data, safe=False, status=200)
