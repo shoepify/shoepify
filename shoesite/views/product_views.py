@@ -69,14 +69,16 @@ def delete_product(request, product_id):
         product.delete()
         return JsonResponse({'message': 'Product deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
+
+#Search Product
 def search_products(request):
     query = request.GET.get('q', '')
     if not query:
         return JsonResponse({"error": "Search query parameter 'q' is required"}, status=400)
 
-    # Perform case-insensitive search on 'name' and 'description'
+    # Perform case-insensitive search on 'model' and 'description'
     products = Product.objects.filter(
-        Q(name__icontains=query) | Q(description__icontains=query)
+        Q(model__icontains=query) | Q(description__icontains=query)
     )
 
     # Serialize the results

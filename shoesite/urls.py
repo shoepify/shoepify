@@ -7,6 +7,8 @@ from shoesite.views.product_views import list_products, create_product, get_prod
 from shoesite.views.cart_views import add_to_cart, remove_from_cart, get_cart
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund
+from .views import product_views  # or wherever your search_products view is located
+
 
 
 
@@ -16,6 +18,7 @@ urlpatterns = [
     path('customer/create/', create_customer, name='create_customer'),
 
     # Product paths
+    path('products/search/', product_views.search_products, name='search_products'),
     path('products/', list_products, name='list_products'),
     path('products/create/', create_product, name='create_product'),
     path('products/<str:product_id>/', get_product, name='get_product'),

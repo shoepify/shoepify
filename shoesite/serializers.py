@@ -14,8 +14,8 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['product_id', 'model', 'serial_number', 'stock', 'inventory_to_stock', 
-                  'warranty_status', 'distributor_info', 'description', 'category', 
-                  'base_price', 'price', 'discount']  # Include new fields
+                  'warranty_status', 'distributor_info', 'description', 'base_price', 
+                  'price', 'popularity_score', 'category']
 
 
 # Shopping Cart and Cart Item Serializers
