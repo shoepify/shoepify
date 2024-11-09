@@ -1,7 +1,7 @@
 # views.py
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
-from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
+from .models import Comment, Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
 import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -208,5 +208,34 @@ def approve_refund(request, refund_id):
         return JsonResponse({'status': 'success', 'message': 'Refund approved successfully.', 'refunded_amount': refund.refunded_amount}, status=200)
 
 # Make sure to define the URL patterns for these new views in your urls.py
+
+@csrf_exempt
+def add_comment(request, product_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        customer_id = data.get('customer_id')
+        comment_text = data.get('comment')
+        
+        # Check if the customer exists
+        if not Customer.objects.filter(customer_id=customer_id).exists():
+            return JsonResponse({"error": "Invalid customer ID."}, status=400)
+        
+        # Check if the customer has purchased the product
+        has_purchased = OrderItem.objects.filter(order__customer_id=customer_id, product_id=product_id).exists()
+        
+        if not has_purchased:
+            return JsonResponse({"error": "You cannot give comment before buying it."}, status=403)
+        
+        # If purchased, save the comment
+        comment = Comment.objects.create(
+            product_id=product_id,
+            customer_id=customer_id,
+            comment=comment_text,
+            approval_status='Pending'  # Waiting for admin approval
+        )
+        
+        return JsonResponse({"message": "Your comment is waiting for approval.", "comment_id": comment.comment_id}, status=201)
+    
+    return JsonResponse({"error": "Invalid request."}, status=400)
 
 

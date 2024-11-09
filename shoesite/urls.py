@@ -51,6 +51,9 @@ urlpatterns = [
     # refund paths
     path('refund/request/<int:order_item_id>/', request_refund, name='request_refund'),
     path('refund/approve/<int:refund_id>/', approve_refund, name='approve_refund'),
+
+    #comment paths
+    path('products/<int:product_id>/add_comment/', views.add_comment, name='add_comment'),
 ]
 
 
