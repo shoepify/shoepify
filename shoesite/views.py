@@ -1,7 +1,7 @@
 # views.py
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
-from .models import Comment, Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
+from .models import Comment, Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem, Rating
 import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -238,4 +238,35 @@ def add_comment(request, product_id):
     
     return JsonResponse({"error": "Invalid request."}, status=400)
 
+@csrf_exempt
+def add_rating(request, product_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        customer_id = data.get('customer_id')
+        rating_value = data.get('rating_value')
+        
+        # Validate rating value
+        if rating_value < 1 or rating_value > 5:
+            return JsonResponse({"error": "Invalid rating value. Must be between 1 and 5."}, status=400)
+        
+        # Check if the customer exists
+        if not Customer.objects.filter(customer_id=customer_id).exists():
+            return JsonResponse({"error": "Invalid customer ID."}, status=400)
+        
+        # Check if the customer has purchased the product
+        has_purchased = OrderItem.objects.filter(order__customer_id=customer_id, product__product_id=product_id).exists()
+        
+        if not has_purchased:
+            return JsonResponse({"error": "You cannot rate a product before buying it."}, status=403)
+        
+        # If purchased, save the rating
+        rating = Rating.objects.create(
+            product_id=product_id,
+            customer_id=customer_id,
+            rating_value=rating_value
+        )
+        
+        return JsonResponse({"message": "Your rating has been submitted.", "rating_id": rating.rating_id}, status=201)
+    
+    return JsonResponse({"error": "Invalid request."}, status=400)
 

@@ -2,8 +2,8 @@ from django.test import TestCase
 from django.urls import reverse
 import json
 from rest_framework import status
-from .models import Customer, Order, OrderItem, Product, Wishlist, WishlistItem, ShoppingCart, CartItem, Comment
-
+from .models import Customer, Order, OrderItem, Product, Wishlist, WishlistItem, ShoppingCart, CartItem, Comment, Rating
+"""
 # customer 
 class CustomerModelTests(TestCase):
     def setUp(self):
@@ -363,3 +363,122 @@ class CommentTests(TestCase):
         
         self.assertEqual(response.status_code, 400)  # Expecting 400 for invalid customer
         self.assertIn("Invalid customer ID", response.json()['error'])
+"""""
+
+class RatingTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        # Create a customer
+        cls.customer = Customer.objects.create(
+            customer_id="002",
+            name="John Doe",
+            tax_id="1234567890",
+            email="john.doe@example.com",
+            password="password123",
+            home_address="123 Main St",
+            billing_address="123 Main St",
+            phone_number="5551234567"
+        )
+        
+
+        # Create a product
+        cls.product = Product.objects.create(
+            product_id="001",
+            model="Running Shoes",
+            serial_number="SN123456",
+            stock=100,
+            inventory_to_stock=50,
+            warranty_status="Valid",
+            distributor_info="BestShoes Inc.",
+            description="Comfortable running shoes for all athletes."
+        )
+
+        # Create an order for the customer
+        cls.order = Order.objects.create(
+            customer=cls.customer,
+            order_date="2024-01-01",
+            total_amount=50.00,
+            discount_applied=False
+        )
+
+        # Link the product to the order via OrderItem
+        cls.order_item = OrderItem.objects.create(
+            order=cls.order,
+            product=cls.product,
+            quantity=1,
+            price_per_item=50.00
+        )
+
+        # Create ratings for the product
+        cls.rating1 = Rating.objects.create(
+            product=cls.product,
+            customer=cls.customer,
+            rating_value=4
+        )
+
+        cls.rating2 = Rating.objects.create(
+            product=cls.product,
+            customer=cls.customer,
+            rating_value=5
+        )
+
+    def test_rating_creation(self):
+        # Test that the rating was created correctly
+        self.assertEqual(self.rating1.rating_value, 4)
+        self.assertEqual(self.rating2.rating_value, 5)
+
+    def test_create_rating(self):
+        # Test the API endpoint for creating a rating
+        url = reverse('add_rating', kwargs={'product_id': "001"})  # Use correct product_id
+        data = {
+            'customer_id': "002",  # Use correct customer_id
+            'rating_value': 5
+        }
+        # Check the number of ratings before adding a new one
+        before_count = Rating.objects.count()
+        print(f"Before adding rating: {before_count}")
+        
+        response = self.client.post(url, json.dumps(data), content_type='application/json')
+
+        # Print the new count of ratings after adding the rating
+        new_count = Rating.objects.count()
+        print("After adding rating:", new_count)
+        
+        # Ensure the rating was created correctly
+        self.assertEqual(response.status_code, 201)  # Assuming 201 for created
+        self.assertEqual(Rating.objects.count(), 3)  # Check if a new rating is created
+        new_rating = Rating.objects.last()
+        self.assertEqual(new_rating.rating_value, 5)
+
+    def test_invalid_rating(self):
+        # Test the case where an invalid rating is posted (e.g., invalid customer)
+        url = reverse('add_rating', kwargs={'product_id': "001"})
+        data = {
+            'customer_id': "invalid_customer_id",  # Use a non-existent customer ID
+            'rating_value': 3
+        }
+        response = self.client.post(url, json.dumps(data), content_type='application/json')
+        
+        self.assertEqual(response.status_code, 400)  # Expecting 400 for invalid customer
+        self.assertIn("Invalid customer ID", response.json()['error'])
+
+    def test_rating_value_range(self):
+        # Test if rating value is within the valid range (1-5)
+        url = reverse('add_rating', kwargs={'product_id': "001"})
+        
+        # Test invalid rating value (outside range)
+        data = {
+            'customer_id': "002",
+            'rating_value': 6  # Invalid rating value
+        }
+        response = self.client.post(url, json.dumps(data), content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid rating value", response.json()['error'])
+
+        # Test valid rating value
+        data = {
+            'customer_id': "002",
+            'rating_value': 4  # Valid rating value
+        }
+        response = self.client.post(url, json.dumps(data), content_type='application/json')
+        self.assertEqual(response.status_code, 201)
