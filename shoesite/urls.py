@@ -53,7 +53,7 @@ urlpatterns = [
     path('refund/approve/<int:refund_id>/', approve_refund, name='approve_refund'),
 
     #comment paths
-    path('products/<int:product_id>/add_comment/', views.add_comment, name='add_comment'),
+    path('products/<str:product_id>/add_comment/', views.add_comment, name='add_comment'),
 ]
 
 
