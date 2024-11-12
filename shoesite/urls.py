@@ -54,6 +54,7 @@ urlpatterns = [
 
     #comment paths
     path('products/<str:product_id>/add_comment/', views.add_comment, name='add_comment'),
+    path('products/<str:product_id>/comments/', views.get_comments, name='get_comments'),
 
     # For adding ratings
     path('products/<str:product_id>/add_rating/', views.add_rating, name='add_rating'),

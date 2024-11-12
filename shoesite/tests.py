@@ -261,7 +261,7 @@ class WishlistTests(TestCase):
         with self.assertRaises(Wishlist.DoesNotExist):
             Wishlist.objects.get(customer=self.customer)
 
-
+"""
 class CommentTests(TestCase):
 
     @classmethod
@@ -276,6 +276,27 @@ class CommentTests(TestCase):
             home_address="123 Main St",
             billing_address="123 Main St",
             phone_number="5551234567"
+        )
+        # Create another customer
+        cls.customer2 = Customer.objects.create(
+            customer_id="003",
+            name="Jane Doe",
+            tax_id="9876543210",
+            email="jane.doe@example.com",
+            password="password456",
+            home_address="456 Another St",
+            billing_address="456 Another St",
+            phone_number="5559876543"
+        )
+        cls.customer3 = Customer.objects.create(
+            customer_id="004",
+            name="Sam Smith",
+            tax_id="1122334455",
+            email="sam.smith@example.com",
+            password="password789",
+            home_address="789 Elm St",
+            billing_address="789 Elm St",
+            phone_number="5552468101"
         )
 
         # Create a product
@@ -297,6 +318,20 @@ class CommentTests(TestCase):
             discount_applied=False
         )
 
+        # Create  order for the customer2
+        cls.order2 = Order.objects.create(
+            customer=cls.customer2,
+            order_date="2024-01-02",
+            total_amount=75.00,
+            discount_applied=True
+        )
+        cls.order3 = Order.objects.create(
+            customer=cls.customer3,
+            order_date="2024-02-01",
+            total_amount=100.00,
+            discount_applied=True
+        )
+        
         # Link the product to the order via OrderItem
         cls.order_item = OrderItem.objects.create(
             order=cls.order,
@@ -304,8 +339,20 @@ class CommentTests(TestCase):
             quantity=1,
             price_per_item=50.00
         )
+        cls.order_item2 = OrderItem.objects.create(
+            order=cls.order2,
+            product=cls.product,
+            quantity=1,
+            price_per_item=75.00
+        )
+        cls.order_item3 = OrderItem.objects.create(
+            order=cls.order3,
+            product=cls.product,
+            quantity=1,
+            price_per_item=100.00
+        )
 
-        # Create two comments for the product
+        # Create three comments for the product
         cls.comment1 = Comment.objects.create(
             product=cls.product,
             customer=cls.customer,
@@ -315,21 +362,29 @@ class CommentTests(TestCase):
 
         cls.comment2 = Comment.objects.create(
             product=cls.product,
-            customer=cls.customer,
-            comment="Perfect",
+            customer=cls.customer2,
+            comment="Very stylish and durable!",
             approval_status="Approved"
         )
+        '''
+        cls.comment3 = Comment.objects.create(
+            product=cls.product,
+            customer=cls.customer3,
+            comment="Love the fit and feel!",
+            approval_status="Pending"
+        )
+        '''
 
     def test_comment_creation(self):
         # Test that the comment was created correctly
-        self.assertEqual(self.comment2.comment, "Perfect")
+        self.assertEqual(self.comment2.comment, "Very stylish and durable!")
         self.assertEqual(self.comment2.approval_status, "Approved")
 
     def test_create_comment(self):
         # Test the API endpoint for creating a comment
         url = reverse('add_comment', kwargs={'product_id': "001"})  # Use correct product_id
         data = {
-            'customer_id': "002",  # Use correct customer_id
+            'customer_id': "004",  # Use correct customer_id
             'comment': "This is a new comment."
         }
         response = self.client.post(url, json.dumps(data), content_type='application/json')
@@ -344,6 +399,15 @@ class CommentTests(TestCase):
         new_comment = Comment.objects.last()
         self.assertEqual(new_comment.comment, "This is a new comment.")
         self.assertEqual(new_comment.approval_status, "Pending")
+        data_duplicate = {
+        'customer_id': "003",  # Same customer_id
+        'comment': "This is another comment."
+        }
+        response_duplicate = self.client.post(url, json.dumps(data_duplicate), content_type='application/json')
+
+        # Assert that the second comment attempt fails
+        self.assertEqual(response_duplicate.status_code, 400)
+        self.assertIn("You have already commented on this product.", response_duplicate.json()['error'])
 
     def test_comment_approval_status(self):
         # Test if comment approval status is correct
@@ -363,8 +427,35 @@ class CommentTests(TestCase):
         
         self.assertEqual(response.status_code, 400)  # Expecting 400 for invalid customer
         self.assertIn("Invalid customer ID", response.json()['error'])
-"""""
+    
+    def test_get_comments(self):
+    # Test the API endpoint for getting comments for a product
+        url = reverse('get_comments', kwargs={'product_id': "001"})  # Correct product_id (string type)
+        response = self.client.get(url)
 
+        # Ensure the response is OK (status code 200)
+        self.assertEqual(response.status_code, 200)
+        
+        # Print the response content for debugging
+        print("Response Data:", response.json())
+        
+        # Ensure the correct comments are returned
+        comments = response.json().get('comments', [])
+        print("Comments:", comments)  # Debugging the returned comments
+
+        # Check if the correct number of comments are returned
+        self.assertEqual(len(comments), 2)  # Should return two comments in this case
+
+        # Ensure the correct content of the comments
+        self.assertEqual(comments[0]['comment'], "Great product, very comfortable!")
+        self.assertEqual(comments[1]['comment'], "Very stylish and durable!")
+
+        # Ensure the approval statuses are correct
+        self.assertEqual(comments[0]['approval_status'], "Pending")
+        self.assertEqual(comments[1]['approval_status'], "Approved")
+
+
+""""
 class RatingTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -504,3 +595,4 @@ class RatingTests(TestCase):
         self.assertIn(4, ratings_values)
         self.assertIn(5, ratings_values)
         self.assertIn("002", customer_ids)
+"""

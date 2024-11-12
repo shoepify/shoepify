@@ -226,6 +226,10 @@ def add_comment(request, product_id):
         if not has_purchased:
             return JsonResponse({"error": "You cannot give comment before buying it."}, status=403)
         
+        # Check if the customer has already commented on this product
+        if Comment.objects.filter(customer_id=customer_id, product_id=product_id).exists():
+            return JsonResponse({"error": "You have already commented on this product."}, status=400)
+        
         # If purchased, save the comment
         comment = Comment.objects.create(
             product_id=product_id,
@@ -235,6 +239,25 @@ def add_comment(request, product_id):
         )
         
         return JsonResponse({"message": "Your comment is waiting for approval.", "comment_id": comment.comment_id}, status=201)
+    
+    return JsonResponse({"error": "Invalid request."}, status=400)
+
+def get_comments(request, product_id):
+    if request.method == 'GET':
+        comments = Comment.objects.filter(product_id=product_id)
+        #If we want just the approveed ones use this
+        #comments = Comment.objects.filter(product_id=product_id, approval_status='Approved')
+        comments_data = [
+            {
+                "comment_id": comment.comment_id,
+                "customer_id": comment.customer.customer_id,
+                "comment": comment.comment,
+                "approval_status": comment.approval_status,
+            }
+            for comment in comments
+        ]
+        
+        return JsonResponse({"comments": comments_data}, status=200)
     
     return JsonResponse({"error": "Invalid request."}, status=400)
 
