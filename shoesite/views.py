@@ -51,6 +51,11 @@ def list_products(request):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
+# New ProductViewSet using Django REST Framework
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
 # Create a new product
 @csrf_exempt
 def create_product(request):

@@ -21,8 +21,16 @@ from django.urls import path, include
 from . import views
 from rest_framework.routers import DefaultRouter
 #from .views import CustomerViewSet, WishlistViewSet, RefundViewSet
+from django.conf import settings
+from django.conf.urls.static import static
+from .views import ProductViewSet, list_products
+
 
 from .views import get_customer, create_customer, add_to_cart,  add_to_wishlist, remove_from_cart, get_cart, remove_from_wishlist, get_wishlist, request_refund, approve_refund, create_product, get_product, update_product, delete_product, list_products
+
+
+router = DefaultRouter()
+router.register(r'products', ProductViewSet)
 
 urlpatterns = [
     # customer paths
@@ -51,6 +59,10 @@ urlpatterns = [
     # refund paths
     path('refund/request/<int:order_item_id>/', request_refund, name='request_refund'),
     path('refund/approve/<int:refund_id>/', approve_refund, name='approve_refund'),
-]
+     path('list-products/', list_products, name='list_products'),  # Existing view
+    path('', include(router.urls)),  # Include the ViewSet's URLs
+] 
 
 
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

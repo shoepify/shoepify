@@ -15,6 +15,8 @@ from pathlib import Path
 import mysql.connector
 import MySQLdb
 import pymysql
+import os
+
 # Use pymysql as MySQLdb
 pymysql.install_as_MySQLdb()
 
@@ -145,3 +147,10 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the broker
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+

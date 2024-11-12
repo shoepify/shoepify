@@ -1,6 +1,8 @@
 # serializers.py
 from rest_framework import serializers
 from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
+import base64
+
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -10,13 +12,33 @@ class CustomerSerializer(serializers.ModelSerializer):
             'home_address', 'billing_address', 'phone_number'
         ]
 
+
+
+
+
 class ProductSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
-        fields = ['product_id', 'model', 'serial_number', 'stock', 'inventory_to_stock', 
-                  'warranty_status', 'distributor_info', 'description',  
-                  'base_price', 'price', 'discount']  # Include new fields
+        fields = [
+            'product_id',
+            'model',
+            'serial_number',
+            'stock',
+            'warranty_status',
+            'distributor_info',
+            'description',
+            'base_price',
+            'price',
+            'image_url'  # Include the image URL
+        ]
 
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image and request:
+            return request.build_absolute_uri(obj.image.url)
+        return None
 
 # Shopping Cart and Cart Item Serializers
 class CartItemSerializer(serializers.ModelSerializer):
