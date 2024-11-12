@@ -482,3 +482,25 @@ class RatingTests(TestCase):
         }
         response = self.client.post(url, json.dumps(data), content_type='application/json')
         self.assertEqual(response.status_code, 201)
+
+    def test_retrieve_ratings(self):
+        # Test retrieving ratings for a specific product
+        url = reverse('get_ratings', kwargs={'product_id': "001"})  # Use correct product_id
+        response = self.client.get(url)
+
+        # Ensure the response is successful
+        self.assertEqual(response.status_code, 200)
+
+        # Parse the JSON response
+        data = response.json()
+
+        # Check the number of ratings returned
+        self.assertEqual(len(data['ratings']), 2)
+
+        # Verify the rating values and customer IDs
+        ratings_values = [rating['rating_value'] for rating in data['ratings']]
+        customer_ids = [rating['customer_id'] for rating in data['ratings']]
+
+        self.assertIn(4, ratings_values)
+        self.assertIn(5, ratings_values)
+        self.assertIn("002", customer_ids)

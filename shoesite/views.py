@@ -270,3 +270,26 @@ def add_rating(request, product_id):
     
     return JsonResponse({"error": "Invalid request."}, status=400)
 
+def get_ratings(request, product_id):
+    try:
+        # Retrieve the product by string product_id
+        product = Product.objects.get(product_id=product_id)
+        
+        # Retrieve ratings for the specified product
+        ratings = Rating.objects.filter(product=product)
+        
+        # Format ratings data
+        ratings_data = [
+            {
+                "rating_value": rating.rating_value,
+                "customer_id": rating.customer.customer_id,
+                "comment": rating.comment if hasattr(rating, 'comment') else None
+            }
+            for rating in ratings
+        ]
+        
+        return JsonResponse({"ratings": ratings_data}, status=200)
+    
+    except Product.DoesNotExist:
+        return JsonResponse({"error": "Product not found"}, status=404)
+

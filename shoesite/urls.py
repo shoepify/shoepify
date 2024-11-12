@@ -57,6 +57,7 @@ urlpatterns = [
 
     # For adding ratings
     path('products/<str:product_id>/add_rating/', views.add_rating, name='add_rating'),
+    path('products/<str:product_id>/ratings/', views.get_ratings, name='get_ratings'),
 ]
 
 
