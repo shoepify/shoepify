@@ -3,6 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
 from .models import Comment, Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem, Rating
 import json
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from rest_framework import viewsets, status
@@ -260,6 +261,31 @@ def get_comments(request, product_id):
         return JsonResponse({"comments": comments_data}, status=200)
     
     return JsonResponse({"error": "Invalid request."}, status=400)
+
+def delete_comment(request, product_id, comment_id):
+    if request.method == 'DELETE':
+        try:
+            # Get the comment for the given product and comment_id
+            comment = Comment.objects.get(comment_id=comment_id, product__product_id=product_id)
+            
+            # Parse the JSON data from the body of the DELETE request
+            data = json.loads(request.body)  # Request body contains the customer_id in JSON format
+            
+            customer_id = data.get('customer_id')
+
+            # Check if the customer is the one who made the comment
+            if str(comment.customer.customer_id) != customer_id:
+                return JsonResponse({'error': 'You can only delete your own comments.'}, status=403)
+
+            # Proceed to delete the comment
+            comment.delete()
+
+            return JsonResponse({}, status=204)  # No content on successful deletion
+
+        except Comment.DoesNotExist:
+            return JsonResponse({'error': 'Comment not found.'}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON.'}, status=400)
 
 @csrf_exempt
 def add_rating(request, product_id):

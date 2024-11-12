@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 import json
+from django.http import JsonResponse
 from rest_framework import status
 from .models import Customer, Order, OrderItem, Product, Wishlist, WishlistItem, ShoppingCart, CartItem, Comment, Rating
 """
@@ -262,7 +263,7 @@ class WishlistTests(TestCase):
             Wishlist.objects.get(customer=self.customer)
 
 """
-"""
+
 class CommentTests(TestCase):
 
     @classmethod
@@ -454,6 +455,72 @@ class CommentTests(TestCase):
         # Ensure the approval statuses are correct
         self.assertEqual(comments[0]['approval_status'], "Pending")
         self.assertEqual(comments[1]['approval_status'], "Approved")
+    
+    def delete_comment(request, product_id, comment_id):
+        if request.method == 'DELETE':
+            try:
+                # Get the comment for the given product and comment_id
+                comment = Comment.objects.get(comment_id=comment_id, product__product_id=product_id)
+                
+                # Parse the JSON data from the body of the DELETE request
+                data = json.loads(request.body)  # Request body contains the customer_id in JSON format
+                
+                customer_id = data.get('customer_id')
+
+                # Check if the customer ID is valid
+                try:
+                    customer = Customer.objects.get(customer_id=customer_id)
+                except Customer.DoesNotExist:
+                    return JsonResponse({'error': 'Invalid customer ID'}, status=400)
+
+                # Check if the customer is the one who made the comment
+                if str(comment.customer.customer_id) != customer_id:
+                    return JsonResponse({'error': 'You can only delete your own comments.'}, status=403)
+
+                # Proceed to delete the comment
+                comment.delete()
+
+                return JsonResponse({}, status=204)  # No content on successful deletion
+
+            except Comment.DoesNotExist:
+                return JsonResponse({'error': 'Comment not found.'}, status=404)
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+
+    def test_delete_comment_not_found(self):
+        # Ensure the comment count is correct before deletion
+        comment_count_before = Comment.objects.count()
+
+        # Simulate the delete request for a non-existent comment
+        url = reverse('delete_comment', kwargs={'product_id': "001", 'comment_id': 999})  # Non-existent comment ID
+        data = {'customer_id': "002"}  # customer_id for the owner
+        response = self.client.delete(url, data=json.dumps(data), content_type='application/json')
+
+        # Ensure the response indicates that the comment was not found (status code 404)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('Comment not found.', response.json()['error'])
+        
+        # Ensure the comment count remains the same (not deleted)
+        comment_count_after = Comment.objects.count()
+        self.assertEqual(comment_count_after, comment_count_before)
+
+    def test_delete_comment_invalid_customer_id(self):
+        # Ensure the comment exists before deletion
+        comment_count_before = Comment.objects.count()
+
+        # Simulate the delete request with an invalid customer ID
+        url = reverse('delete_comment', kwargs={'product_id': "001", 'comment_id': self.comment1.comment_id})
+        data = {'customer_id': "invalid_customer_id"}  # Invalid customer ID
+        response = self.client.delete(url, json.dumps(data), content_type='application/json')
+
+        # Check for status code 403 for invalid customer ID
+        self.assertEqual(response.status_code, 403)  # Check that it returns a 403
+        self.assertIn('You can only delete your own comments.', response.json()['error'])
+
+        # Ensure the comment count remains the same (not deleted)
+        comment_count_after = Comment.objects.count()
+        self.assertEqual(comment_count_after, comment_count_before)
+
 
 
 """
@@ -564,7 +631,7 @@ class RatingTests(TestCase):
     
     
     def test_create_rating(self):
-        """Test the API endpoint for creating a rating"""
+    
         url = reverse('add_rating', kwargs={'product_id': self.product.product_id})
         data = {
             'customer_id': "004",
@@ -584,7 +651,7 @@ class RatingTests(TestCase):
         self.assertEqual(new_rating.rating_value, 5) 
 
     def test_retrieve_ratings(self):
-        """Test retrieving all ratings for a product"""
+    
         url = reverse('get_ratings', kwargs={'product_id': self.product.product_id})
         response = self.client.get(url)
         
@@ -602,7 +669,7 @@ class RatingTests(TestCase):
         self.assertIn(self.customer2.customer_id, customer_ids)
 
     def test_invalid_customer_rating(self):
-        """Test adding a rating with an invalid customer ID"""
+    
         url = reverse('add_rating', kwargs={'product_id': self.product.product_id})
         data = {
             'customer_id': "invalid_customer_id",
@@ -614,7 +681,7 @@ class RatingTests(TestCase):
         self.assertIn("Invalid customer ID", response.json()['error'])
 
     def test_rating_already_given(self):
-        """Test that a customer cannot rate the same product more than once"""
+    
         url = reverse('add_rating', kwargs={'product_id': self.product.product_id})
         data = {
             'customer_id': self.customer.customer_id,
@@ -623,3 +690,4 @@ class RatingTests(TestCase):
         response = self.client.post(url, json.dumps(data), content_type='application/json')
         self.assertEqual(response.status_code, 400)
         self.assertIn("You have already rated this product.", response.json()['error'])
+        """
