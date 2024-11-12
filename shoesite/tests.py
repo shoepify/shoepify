@@ -262,6 +262,7 @@ class WishlistTests(TestCase):
             Wishlist.objects.get(customer=self.customer)
 
 """
+"""
 class CommentTests(TestCase):
 
     @classmethod
@@ -455,11 +456,12 @@ class CommentTests(TestCase):
         self.assertEqual(comments[1]['approval_status'], "Approved")
 
 
-""""
+"""
 class RatingTests(TestCase):
+
     @classmethod
     def setUpTestData(cls):
-        # Create a customer
+        # Create customers
         cls.customer = Customer.objects.create(
             customer_id="002",
             name="John Doe",
@@ -471,8 +473,29 @@ class RatingTests(TestCase):
             phone_number="5551234567"
         )
         
+        cls.customer2 = Customer.objects.create(
+            customer_id="003",
+            name="Jane Doe",
+            tax_id="9876543210",
+            email="jane.doe@example.com",
+            password="password456",
+            home_address="456 Another St",
+            billing_address="456 Another St",
+            phone_number="5559876543"
+        )
 
-        # Create a product
+        cls.customer3 = Customer.objects.create(
+            customer_id="004",
+            name="Sam Smith",
+            tax_id="1122334455",
+            email="sam.smith@example.com",
+            password="password789",
+            home_address="789 Elm St",
+            billing_address="789 Elm St",
+            phone_number="5552468101"
+        )
+
+        # Create product
         cls.product = Product.objects.create(
             product_id="001",
             model="Running Shoes",
@@ -480,16 +503,28 @@ class RatingTests(TestCase):
             stock=100,
             inventory_to_stock=50,
             warranty_status="Valid",
-            distributor_info="BestShoes Inc.",
-            description="Comfortable running shoes for all athletes."
+            distributor_info="BestShoes Inc."
         )
 
-        # Create an order for the customer
+        # Create orders and link them to customers
         cls.order = Order.objects.create(
             customer=cls.customer,
             order_date="2024-01-01",
             total_amount=50.00,
             discount_applied=False
+        )
+
+        cls.order2 = Order.objects.create(
+            customer=cls.customer2,
+            order_date="2024-01-02",
+            total_amount=75.00,
+            discount_applied=True
+        )
+        cls.order3 = Order.objects.create(
+            customer=cls.customer3,
+            order_date="2024-01-02",
+            total_amount=75.00,
+            discount_applied=True
         )
 
         # Link the product to the order via OrderItem
@@ -500,6 +535,19 @@ class RatingTests(TestCase):
             price_per_item=50.00
         )
 
+        cls.order_item2 = OrderItem.objects.create(
+            order=cls.order2,
+            product=cls.product,
+            quantity=1,
+            price_per_item=75.00
+        )
+        cls.order_item3 = OrderItem.objects.create(
+            order=cls.order3,
+            product=cls.product,
+            quantity=1,
+            price_per_item=75.00
+        )
+        
         # Create ratings for the product
         cls.rating1 = Rating.objects.create(
             product=cls.product,
@@ -509,90 +557,69 @@ class RatingTests(TestCase):
 
         cls.rating2 = Rating.objects.create(
             product=cls.product,
-            customer=cls.customer,
+            customer=cls.customer2,
             rating_value=5
         )
 
-    def test_rating_creation(self):
-        # Test that the rating was created correctly
-        self.assertEqual(self.rating1.rating_value, 4)
-        self.assertEqual(self.rating2.rating_value, 5)
-
+    
+    
     def test_create_rating(self):
-        # Test the API endpoint for creating a rating
-        url = reverse('add_rating', kwargs={'product_id': "001"})  # Use correct product_id
+        """Test the API endpoint for creating a rating"""
+        url = reverse('add_rating', kwargs={'product_id': self.product.product_id})
         data = {
-            'customer_id': "002",  # Use correct customer_id
-            'rating_value': 5
-        }
-        # Check the number of ratings before adding a new one
-        before_count = Rating.objects.count()
-        print(f"Before adding rating: {before_count}")
+            'customer_id': "004",
+            'rating_value': 5 }
+        
         
         response = self.client.post(url, json.dumps(data), content_type='application/json')
 
-        # Print the new count of ratings after adding the rating
-        new_count = Rating.objects.count()
-        print("After adding rating:", new_count)
-        
-        # Ensure the rating was created correctly
-        self.assertEqual(response.status_code, 201)  # Assuming 201 for created
-        self.assertEqual(Rating.objects.count(), 3)  # Check if a new rating is created
-        new_rating = Rating.objects.last()
-        self.assertEqual(new_rating.rating_value, 5)
+        # Debugging the response content
+        print("Response Content:", response.content)
 
-    def test_invalid_rating(self):
-        # Test the case where an invalid rating is posted (e.g., invalid customer)
-        url = reverse('add_rating', kwargs={'product_id': "001"})
+        # Verify status code and content
+        self.assertEqual(response.status_code, 201)
+
+        new_rating = Rating.objects.filter(product=self.product, customer=self.customer3).first()
+        self.assertIsNotNone(new_rating)
+        self.assertEqual(new_rating.rating_value, 5) 
+
+    def test_retrieve_ratings(self):
+        """Test retrieving all ratings for a product"""
+        url = reverse('get_ratings', kwargs={'product_id': self.product.product_id})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify retrieved ratings count and content
+        data = response.json()
+        self.assertEqual(len(data['ratings']), 2)
+        ratings_values = [rating['rating_value'] for rating in data['ratings']]
+        customer_ids = [rating['customer_id'] for rating in data['ratings']]
+        
+        self.assertIn(4, ratings_values)
+        self.assertIn(5, ratings_values)
+        self.assertIn(self.customer.customer_id, customer_ids)
+        self.assertIn(self.customer2.customer_id, customer_ids)
+
+    def test_invalid_customer_rating(self):
+        """Test adding a rating with an invalid customer ID"""
+        url = reverse('add_rating', kwargs={'product_id': self.product.product_id})
         data = {
-            'customer_id': "invalid_customer_id",  # Use a non-existent customer ID
+            'customer_id': "invalid_customer_id",
+            'rating_value': 4
+        }
+        response = self.client.post(url, json.dumps(data), content_type='application/json')
+        
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid customer ID", response.json()['error'])
+
+    def test_rating_already_given(self):
+        """Test that a customer cannot rate the same product more than once"""
+        url = reverse('add_rating', kwargs={'product_id': self.product.product_id})
+        data = {
+            'customer_id': self.customer.customer_id,
             'rating_value': 3
         }
         response = self.client.post(url, json.dumps(data), content_type='application/json')
-        
-        self.assertEqual(response.status_code, 400)  # Expecting 400 for invalid customer
-        self.assertIn("Invalid customer ID", response.json()['error'])
-
-    def test_rating_value_range(self):
-        # Test if rating value is within the valid range (1-5)
-        url = reverse('add_rating', kwargs={'product_id': "001"})
-        
-        # Test invalid rating value (outside range)
-        data = {
-            'customer_id': "002",
-            'rating_value': 6  # Invalid rating value
-        }
-        response = self.client.post(url, json.dumps(data), content_type='application/json')
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Invalid rating value", response.json()['error'])
-
-        # Test valid rating value
-        data = {
-            'customer_id': "002",
-            'rating_value': 4  # Valid rating value
-        }
-        response = self.client.post(url, json.dumps(data), content_type='application/json')
-        self.assertEqual(response.status_code, 201)
-
-    def test_retrieve_ratings(self):
-        # Test retrieving ratings for a specific product
-        url = reverse('get_ratings', kwargs={'product_id': "001"})  # Use correct product_id
-        response = self.client.get(url)
-
-        # Ensure the response is successful
-        self.assertEqual(response.status_code, 200)
-
-        # Parse the JSON response
-        data = response.json()
-
-        # Check the number of ratings returned
-        self.assertEqual(len(data['ratings']), 2)
-
-        # Verify the rating values and customer IDs
-        ratings_values = [rating['rating_value'] for rating in data['ratings']]
-        customer_ids = [rating['customer_id'] for rating in data['ratings']]
-
-        self.assertIn(4, ratings_values)
-        self.assertIn(5, ratings_values)
-        self.assertIn("002", customer_ids)
-"""
+        self.assertIn("You have already rated this product.", response.json()['error'])

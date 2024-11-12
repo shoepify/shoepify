@@ -268,13 +268,22 @@ def add_rating(request, product_id):
         customer_id = data.get('customer_id')
         rating_value = data.get('rating_value')
         
-        # Validate rating value
-        if rating_value < 1 or rating_value > 5:
-            return JsonResponse({"error": "Invalid rating value. Must be between 1 and 5."}, status=400)
+        # Validate rating value (ensure it's between 1 and 5)
+        try:
+            rating_value = int(rating_value)
+            if rating_value < 1 or rating_value > 5:
+                return JsonResponse({"error": "Invalid rating value. Must be between 1 and 5."}, status=400)
+        except ValueError:
+            return JsonResponse({"error": "Invalid rating value. Must be an integer."}, status=400)
         
         # Check if the customer exists
-        if not Customer.objects.filter(customer_id=customer_id).exists():
+        customer = Customer.objects.filter(customer_id=customer_id).first()
+        if not customer:
             return JsonResponse({"error": "Invalid customer ID."}, status=400)
+        
+        # Check if the customer has already rated this product
+        if Rating.objects.filter(customer_id=customer_id, product_id=product_id).exists():
+            return JsonResponse({"error": "You have already rated this product."}, status=400)
         
         # Check if the customer has purchased the product
         has_purchased = OrderItem.objects.filter(order__customer_id=customer_id, product__product_id=product_id).exists()
@@ -282,7 +291,7 @@ def add_rating(request, product_id):
         if not has_purchased:
             return JsonResponse({"error": "You cannot rate a product before buying it."}, status=403)
         
-        # If purchased, save the rating
+        # Save the rating (no approval status needed for ratings)
         rating = Rating.objects.create(
             product_id=product_id,
             customer_id=customer_id,
@@ -294,18 +303,14 @@ def add_rating(request, product_id):
     return JsonResponse({"error": "Invalid request."}, status=400)
 
 def get_ratings(request, product_id):
-    try:
-        # Retrieve the product by string product_id
-        product = Product.objects.get(product_id=product_id)
-        
-        # Retrieve ratings for the specified product
-        ratings = Rating.objects.filter(product=product)
-        
-        # Format ratings data
+    if request.method == 'GET':
+        # Retrieve all ratings for the product
+        ratings = Rating.objects.filter(product_id=product_id)
         ratings_data = [
             {
                 "rating_value": rating.rating_value,
                 "customer_id": rating.customer.customer_id,
+                # If you have comments for ratings, you can include them here (e.g., for future use)
                 "comment": rating.comment if hasattr(rating, 'comment') else None
             }
             for rating in ratings
@@ -313,6 +318,5 @@ def get_ratings(request, product_id):
         
         return JsonResponse({"ratings": ratings_data}, status=200)
     
-    except Product.DoesNotExist:
-        return JsonResponse({"error": "Product not found"}, status=404)
+    return JsonResponse({"error": "Invalid request."}, status=400)
 
