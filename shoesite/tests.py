@@ -262,8 +262,9 @@ class WishlistTests(TestCase):
         with self.assertRaises(Wishlist.DoesNotExist):
             Wishlist.objects.get(customer=self.customer)
 
-"""
 
+"""
+"""
 class CommentTests(TestCase):
 
     @classmethod
@@ -376,7 +377,8 @@ class CommentTests(TestCase):
             approval_status="Pending"
         )
         '''
-
+        
+ 
     def test_comment_creation(self):
         # Test that the comment was created correctly
         self.assertEqual(self.comment2.comment, "Very stylish and durable!")
@@ -520,10 +522,8 @@ class CommentTests(TestCase):
         # Ensure the comment count remains the same (not deleted)
         comment_count_after = Comment.objects.count()
         self.assertEqual(comment_count_after, comment_count_before)
+        """
 
-
-
-"""
 class RatingTests(TestCase):
 
     @classmethod
@@ -690,4 +690,53 @@ class RatingTests(TestCase):
         response = self.client.post(url, json.dumps(data), content_type='application/json')
         self.assertEqual(response.status_code, 400)
         self.assertIn("You have already rated this product.", response.json()['error'])
-        """
+
+    def test_delete_rating(self):
+        # Ensure the rating exists before deletion
+        rating_count_before = Rating.objects.count()
+
+        # Simulate the delete request for the rating by the owner
+        url = reverse('delete_rating', kwargs={'product_id': self.product.product_id, 'rating_id': self.rating1.rating_id})
+        data = {'customer_id': "002"}  # customer_id for the owner of the rating
+        response = self.client.delete(url, json.dumps(data), content_type='application/json')
+
+        # Ensure the response is successful (status code 204 for no content)
+        self.assertEqual(response.status_code, 204)
+
+        # Check if the rating was deleted
+        rating_count_after = Rating.objects.count()
+        self.assertEqual(rating_count_after, rating_count_before - 1)  # One less rating
+
+    def test_delete_rating_not_found(self):
+        # Ensure the rating count is correct before deletion
+        rating_count_before = Rating.objects.count()
+
+        # Simulate the delete request for a non-existent rating
+        url = reverse('delete_rating', kwargs={'product_id': self.product.product_id, 'rating_id': 999})  # Non-existent rating ID
+        data = {'customer_id': "002"}  # customer_id for the owner
+        response = self.client.delete(url, json.dumps(data), content_type='application/json')
+
+        # Ensure the response indicates that the rating was not found (status code 404)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('Rating not found.', response.json()['error'])
+
+        # Ensure the rating count remains the same (not deleted)
+        rating_count_after = Rating.objects.count()
+        self.assertEqual(rating_count_after, rating_count_before)
+
+    def test_delete_rating_invalid_customer_id(self):
+        # Ensure the rating exists before deletion
+        rating_count_before = Rating.objects.count()
+
+        # Simulate the delete request with an invalid customer ID
+        url = reverse('delete_rating', kwargs={'product_id': self.product.product_id, 'rating_id': self.rating1.rating_id})
+        data = {'customer_id': "invalid_customer_id"}  # Invalid customer ID
+        response = self.client.delete(url, json.dumps(data), content_type='application/json')
+
+        # Ensure the response indicates invalid customer ID (status code 403)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('You can only delete your own ratings.', response.json()['error'])
+
+        # Ensure the rating count remains the same (not deleted)
+        rating_count_after = Rating.objects.count()
+        self.assertEqual(rating_count_after, rating_count_before)    

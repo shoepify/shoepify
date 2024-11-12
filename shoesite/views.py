@@ -346,3 +346,26 @@ def get_ratings(request, product_id):
     
     return JsonResponse({"error": "Invalid request."}, status=400)
 
+def delete_rating(request, product_id, rating_id):
+    if request.method == 'DELETE':
+        try:
+            # Get the rating for the given product and rating_id
+            rating = Rating.objects.get(rating_id=rating_id, product__product_id=product_id)
+            
+            # Parse the JSON data from the body of the DELETE request
+            data = json.loads(request.body)
+            customer_id = data.get('customer_id')
+
+            # Check if the customer is the one who made the rating
+            if str(rating.customer.customer_id) != customer_id:
+                return JsonResponse({'error': 'You can only delete your own ratings.'}, status=403)
+
+            # Proceed to delete the rating
+            rating.delete()
+
+            return JsonResponse({}, status=204)  # No content on successful deletion
+
+        except Rating.DoesNotExist:
+            return JsonResponse({'error': 'Rating not found.'}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON.'}, status=400)
