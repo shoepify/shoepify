@@ -15,16 +15,22 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 # urls.py
-
+from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from . import views
 from rest_framework.routers import DefaultRouter
+
 #from .views import CustomerViewSet, WishlistViewSet, RefundViewSet
 
 from .views import get_customer, create_customer, add_to_cart,  add_to_wishlist, remove_from_cart, get_cart, remove_from_wishlist, get_wishlist, request_refund, approve_refund, create_product, get_product, update_product, delete_product, list_products
 
 urlpatterns = [
+    #login path
+    re_path('login',views.login),
+    re_path('signup',views.signup),
+    re_path('test_token',views.test_token),
+    re_path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # customer paths
     path('customer/<str:customer_id>/', get_customer, name='get_customer'),
     path('customer/create/', create_customer, name='create_customer'),
