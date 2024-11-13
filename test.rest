@@ -1,0 +1,32 @@
+POST http://127.0.0.1:8000/login
+Content-Type: application/json
+
+{"email":"can@gmail.com","password":"1234"}
+
+###
+
+POST http://127.0.0.1:8000/signup
+Content-Type: application/json
+
+{   
+    "email": "can@gmail.com",
+    "password": "1234",
+    "username": "can"
+    
+}
+
+###
+
+POST http://127.0.0.1:8000/token/refresh/
+Content-Type: application/json
+
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTczMTUyOTA0MiwiaWF0IjoxNzMxNDQyNjQyLCJqdGkiOiI2Y2Y3MGJjODE0ZmI0OTc3ODQxZmM5NmVkODIwZGU0YyIsInVzZXJfaWQiOjIwLCJlbWFpbCI6InNlbGltQGdtYWlsLmNvbSJ9.GSbA012oROZFLJmxwf82kRo8i_uLbckMJnhOtnYJaFA"
+}
+
+###
+
+GET http://127.0.0.1:8000/test_token
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzMxNTE5NzU2LCJpYXQiOjE3MzE1MTYxNTYsImp0aSI6IjE2MjcyNzdkNjc5YTQ4OGFiYjY2ZmMwMDk0ZWQ1YTMwIiwidXNlcl9pZCI6MjEsImVtYWlsIjoiY2FuQGdtYWlsLmNvbSJ9.5ipKvU9WZ-lwLrd8KQTo8sv3WLD8GIOWZyybgPxNBMI
+
+
