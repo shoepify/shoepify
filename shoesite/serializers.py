@@ -1,7 +1,20 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
+from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem,SalesManager,ProductManager
+from django.contrib.auth.models import User
 
+ #new rivar
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta(object):
+        model = User
+        fields = ['id', 'username', 'email', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+
+ #new rivar
+
+
+    
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
@@ -9,6 +22,9 @@ class CustomerSerializer(serializers.ModelSerializer):
             'customer_id', 'password', 'name', 'tax_id', 'email',
             'home_address', 'billing_address', 'phone_number'
         ]
+
+        
+        
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
