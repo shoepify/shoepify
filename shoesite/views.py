@@ -1,4 +1,6 @@
 # views.py
+
+
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -23,6 +25,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework_simplejwt.authentication import JWTAuthentication
 #new rivar
+
+"""
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -327,8 +331,6 @@ def approve_refund(request, refund_id):
         refund.approve_refund()  # Calls the approve_refund method in the Refund model
         return JsonResponse({'status': 'success', 'message': 'Refund approved successfully.', 'refunded_amount': refund.refunded_amount}, status=200)
 
-# Make sure to define the URL patterns for these new views in your urls.py
-
 @csrf_exempt
 def add_comment(request, product_id):
     if request.method == 'POST':
@@ -488,3 +490,8 @@ def delete_rating(request, product_id, rating_id):
             return JsonResponse({'error': 'Rating not found.'}, status=404)
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+
+# Make sure to define the URL patterns for these new views in your urls.py
+"""
+
+
