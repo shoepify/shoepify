@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'shoesite',
     'django_celery_beat',
-    'rest_framework'
+    'rest_framework',
+    'rest_framework.authtoken', 
 ]
 
 MIDDLEWARE = [
@@ -136,7 +137,15 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
+# Django REST Framework settings for token authentication
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
 
 # celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the broker

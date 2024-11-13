@@ -29,6 +29,10 @@ urlpatterns = [
     path('customer/<str:customer_id>/', get_customer, name='get_customer'),
     path('customer/create/', create_customer, name='create_customer'),
 
+    # sign up / login
+    path('auth/signup/', views.sign_up, name='sign_up'),
+    path('auth/login/', views.login, name='login'),
+
     # Product paths
     path('products/', list_products, name='list_products'),
 
