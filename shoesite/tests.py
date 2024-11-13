@@ -1,9 +1,10 @@
 from django.test import TestCase
 from django.urls import reverse
 import json
+from django.http import JsonResponse
 from rest_framework import status
-from .models import Customer, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
-
+from .models import Customer, Order, OrderItem, Product, Wishlist, WishlistItem, ShoppingCart, CartItem, Comment, Rating
+"""
 # customer 
 class CustomerModelTests(TestCase):
     def setUp(self):
@@ -230,7 +231,7 @@ class ShoppingCartTests(TestCase):
 
     
 
-'''
+
 # wishlist tests 
 class WishlistTests(TestCase):
     @classmethod
@@ -260,5 +261,482 @@ class WishlistTests(TestCase):
         self.wishlist.delete()
         with self.assertRaises(Wishlist.DoesNotExist):
             Wishlist.objects.get(customer=self.customer)
-'''
 
+
+"""
+"""
+class CommentTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        # Create a customer
+        cls.customer = Customer.objects.create(
+            customer_id="002",
+            name="John Doe",
+            tax_id="1234567890",
+            email="john.doe@example.com",
+            password="password123",
+            home_address="123 Main St",
+            billing_address="123 Main St",
+            phone_number="5551234567"
+        )
+        # Create another customer
+        cls.customer2 = Customer.objects.create(
+            customer_id="003",
+            name="Jane Doe",
+            tax_id="9876543210",
+            email="jane.doe@example.com",
+            password="password456",
+            home_address="456 Another St",
+            billing_address="456 Another St",
+            phone_number="5559876543"
+        )
+        cls.customer3 = Customer.objects.create(
+            customer_id="004",
+            name="Sam Smith",
+            tax_id="1122334455",
+            email="sam.smith@example.com",
+            password="password789",
+            home_address="789 Elm St",
+            billing_address="789 Elm St",
+            phone_number="5552468101"
+        )
+
+        # Create a product
+        cls.product = Product.objects.create(
+            product_id="001",
+            model="Running Shoes",
+            serial_number="SN123456",
+            stock=100,
+            inventory_to_stock=50,
+            warranty_status="Valid",
+            distributor_info="BestShoes Inc."
+        )
+
+        # Create an order for the customer
+        cls.order = Order.objects.create(
+            customer=cls.customer,
+            order_date="2024-01-01",
+            total_amount=50.00,
+            discount_applied=False
+        )
+
+        # Create  order for the customer2
+        cls.order2 = Order.objects.create(
+            customer=cls.customer2,
+            order_date="2024-01-02",
+            total_amount=75.00,
+            discount_applied=True
+        )
+        cls.order3 = Order.objects.create(
+            customer=cls.customer3,
+            order_date="2024-02-01",
+            total_amount=100.00,
+            discount_applied=True
+        )
+        
+        # Link the product to the order via OrderItem
+        cls.order_item = OrderItem.objects.create(
+            order=cls.order,
+            product=cls.product,
+            quantity=1,
+            price_per_item=50.00
+        )
+        cls.order_item2 = OrderItem.objects.create(
+            order=cls.order2,
+            product=cls.product,
+            quantity=1,
+            price_per_item=75.00
+        )
+        cls.order_item3 = OrderItem.objects.create(
+            order=cls.order3,
+            product=cls.product,
+            quantity=1,
+            price_per_item=100.00
+        )
+
+        # Create three comments for the product
+        cls.comment1 = Comment.objects.create(
+            product=cls.product,
+            customer=cls.customer,
+            comment="Great product, very comfortable!",
+            approval_status="Pending"
+        )
+
+        cls.comment2 = Comment.objects.create(
+            product=cls.product,
+            customer=cls.customer2,
+            comment="Very stylish and durable!",
+            approval_status="Approved"
+        )
+        '''
+        cls.comment3 = Comment.objects.create(
+            product=cls.product,
+            customer=cls.customer3,
+            comment="Love the fit and feel!",
+            approval_status="Pending"
+        )
+        '''
+        
+ 
+    def test_comment_creation(self):
+        # Test that the comment was created correctly
+        self.assertEqual(self.comment2.comment, "Very stylish and durable!")
+        self.assertEqual(self.comment2.approval_status, "Approved")
+
+    def test_create_comment(self):
+        # Test the API endpoint for creating a comment
+        url = reverse('add_comment', kwargs={'product_id': "001"})  # Use correct product_id
+        data = {
+            'customer_id': "004",  # Use correct customer_id
+            'comment': "This is a new comment."
+        }
+        response = self.client.post(url, json.dumps(data), content_type='application/json')
+
+         # Print the new count of comments after adding the comment
+        new_count = Comment.objects.count()
+        print("After adding comment:", new_count)
+        
+        # Ensure the comment was created correctly
+        self.assertEqual(response.status_code, 201)  # Assuming 201 for created
+        self.assertEqual(Comment.objects.count(), 3)  # Check if a new comment is created
+        new_comment = Comment.objects.last()
+        self.assertEqual(new_comment.comment, "This is a new comment.")
+        self.assertEqual(new_comment.approval_status, "Pending")
+        data_duplicate = {
+        'customer_id': "003",  # Same customer_id
+        'comment': "This is another comment."
+        }
+        response_duplicate = self.client.post(url, json.dumps(data_duplicate), content_type='application/json')
+
+        # Assert that the second comment attempt fails
+        self.assertEqual(response_duplicate.status_code, 400)
+        self.assertIn("You have already commented on this product.", response_duplicate.json()['error'])
+
+    def test_comment_approval_status(self):
+        # Test if comment approval status is correct
+        self.comment2.approval_status = "Approved"
+        self.comment2.save()
+        
+        self.assertEqual(self.comment2.approval_status, "Approved")
+
+    def test_invalid_comment(self):
+        # Test the case where an invalid comment is posted (e.g., invalid customer)
+        url = reverse('add_comment', kwargs={'product_id': "001"})
+        data = {
+            'customer_id': "invalid_customer_id",  # Use a non-existent customer ID
+            'comment': "This is an invalid comment."
+        }
+        response = self.client.post(url, json.dumps(data), content_type='application/json')
+        
+        self.assertEqual(response.status_code, 400)  # Expecting 400 for invalid customer
+        self.assertIn("Invalid customer ID", response.json()['error'])
+    
+    def test_get_comments(self):
+    # Test the API endpoint for getting comments for a product
+        url = reverse('get_comments', kwargs={'product_id': "001"})  # Correct product_id (string type)
+        response = self.client.get(url)
+
+        # Ensure the response is OK (status code 200)
+        self.assertEqual(response.status_code, 200)
+        
+        # Print the response content for debugging
+        print("Response Data:", response.json())
+        
+        # Ensure the correct comments are returned
+        comments = response.json().get('comments', [])
+        print("Comments:", comments)  # Debugging the returned comments
+
+        # Check if the correct number of comments are returned
+        self.assertEqual(len(comments), 2)  # Should return two comments in this case
+
+        # Ensure the correct content of the comments
+        self.assertEqual(comments[0]['comment'], "Great product, very comfortable!")
+        self.assertEqual(comments[1]['comment'], "Very stylish and durable!")
+
+        # Ensure the approval statuses are correct
+        self.assertEqual(comments[0]['approval_status'], "Pending")
+        self.assertEqual(comments[1]['approval_status'], "Approved")
+    
+    def delete_comment(request, product_id, comment_id):
+        if request.method == 'DELETE':
+            try:
+                # Get the comment for the given product and comment_id
+                comment = Comment.objects.get(comment_id=comment_id, product__product_id=product_id)
+                
+                # Parse the JSON data from the body of the DELETE request
+                data = json.loads(request.body)  # Request body contains the customer_id in JSON format
+                
+                customer_id = data.get('customer_id')
+
+                # Check if the customer ID is valid
+                try:
+                    customer = Customer.objects.get(customer_id=customer_id)
+                except Customer.DoesNotExist:
+                    return JsonResponse({'error': 'Invalid customer ID'}, status=400)
+
+                # Check if the customer is the one who made the comment
+                if str(comment.customer.customer_id) != customer_id:
+                    return JsonResponse({'error': 'You can only delete your own comments.'}, status=403)
+
+                # Proceed to delete the comment
+                comment.delete()
+
+                return JsonResponse({}, status=204)  # No content on successful deletion
+
+            except Comment.DoesNotExist:
+                return JsonResponse({'error': 'Comment not found.'}, status=404)
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+
+    def test_delete_comment_not_found(self):
+        # Ensure the comment count is correct before deletion
+        comment_count_before = Comment.objects.count()
+
+        # Simulate the delete request for a non-existent comment
+        url = reverse('delete_comment', kwargs={'product_id': "001", 'comment_id': 999})  # Non-existent comment ID
+        data = {'customer_id': "002"}  # customer_id for the owner
+        response = self.client.delete(url, data=json.dumps(data), content_type='application/json')
+
+        # Ensure the response indicates that the comment was not found (status code 404)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('Comment not found.', response.json()['error'])
+        
+        # Ensure the comment count remains the same (not deleted)
+        comment_count_after = Comment.objects.count()
+        self.assertEqual(comment_count_after, comment_count_before)
+
+    def test_delete_comment_invalid_customer_id(self):
+        # Ensure the comment exists before deletion
+        comment_count_before = Comment.objects.count()
+
+        # Simulate the delete request with an invalid customer ID
+        url = reverse('delete_comment', kwargs={'product_id': "001", 'comment_id': self.comment1.comment_id})
+        data = {'customer_id': "invalid_customer_id"}  # Invalid customer ID
+        response = self.client.delete(url, json.dumps(data), content_type='application/json')
+
+        # Check for status code 403 for invalid customer ID
+        self.assertEqual(response.status_code, 403)  # Check that it returns a 403
+        self.assertIn('You can only delete your own comments.', response.json()['error'])
+
+        # Ensure the comment count remains the same (not deleted)
+        comment_count_after = Comment.objects.count()
+        self.assertEqual(comment_count_after, comment_count_before)
+        """
+
+class RatingTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        # Create customers
+        cls.customer = Customer.objects.create(
+            customer_id="002",
+            name="John Doe",
+            tax_id="1234567890",
+            email="john.doe@example.com",
+            password="password123",
+            home_address="123 Main St",
+            billing_address="123 Main St",
+            phone_number="5551234567"
+        )
+        
+        cls.customer2 = Customer.objects.create(
+            customer_id="003",
+            name="Jane Doe",
+            tax_id="9876543210",
+            email="jane.doe@example.com",
+            password="password456",
+            home_address="456 Another St",
+            billing_address="456 Another St",
+            phone_number="5559876543"
+        )
+
+        cls.customer3 = Customer.objects.create(
+            customer_id="004",
+            name="Sam Smith",
+            tax_id="1122334455",
+            email="sam.smith@example.com",
+            password="password789",
+            home_address="789 Elm St",
+            billing_address="789 Elm St",
+            phone_number="5552468101"
+        )
+
+        # Create product
+        cls.product = Product.objects.create(
+            product_id="001",
+            model="Running Shoes",
+            serial_number="SN123456",
+            stock=100,
+            inventory_to_stock=50,
+            warranty_status="Valid",
+            distributor_info="BestShoes Inc."
+        )
+
+        # Create orders and link them to customers
+        cls.order = Order.objects.create(
+            customer=cls.customer,
+            order_date="2024-01-01",
+            total_amount=50.00,
+            discount_applied=False
+        )
+
+        cls.order2 = Order.objects.create(
+            customer=cls.customer2,
+            order_date="2024-01-02",
+            total_amount=75.00,
+            discount_applied=True
+        )
+        cls.order3 = Order.objects.create(
+            customer=cls.customer3,
+            order_date="2024-01-02",
+            total_amount=75.00,
+            discount_applied=True
+        )
+
+        # Link the product to the order via OrderItem
+        cls.order_item = OrderItem.objects.create(
+            order=cls.order,
+            product=cls.product,
+            quantity=1,
+            price_per_item=50.00
+        )
+
+        cls.order_item2 = OrderItem.objects.create(
+            order=cls.order2,
+            product=cls.product,
+            quantity=1,
+            price_per_item=75.00
+        )
+        cls.order_item3 = OrderItem.objects.create(
+            order=cls.order3,
+            product=cls.product,
+            quantity=1,
+            price_per_item=75.00
+        )
+        
+        # Create ratings for the product
+        cls.rating1 = Rating.objects.create(
+            product=cls.product,
+            customer=cls.customer,
+            rating_value=4
+        )
+
+        cls.rating2 = Rating.objects.create(
+            product=cls.product,
+            customer=cls.customer2,
+            rating_value=5
+        )
+
+    
+    
+    def test_create_rating(self):
+    
+        url = reverse('add_rating', kwargs={'product_id': self.product.product_id})
+        data = {
+            'customer_id': "004",
+            'rating_value': 5 }
+        
+        
+        response = self.client.post(url, json.dumps(data), content_type='application/json')
+
+        # Debugging the response content
+        print("Response Content:", response.content)
+
+        # Verify status code and content
+        self.assertEqual(response.status_code, 201)
+
+        new_rating = Rating.objects.filter(product=self.product, customer=self.customer3).first()
+        self.assertIsNotNone(new_rating)
+        self.assertEqual(new_rating.rating_value, 5) 
+
+    def test_retrieve_ratings(self):
+    
+        url = reverse('get_ratings', kwargs={'product_id': self.product.product_id})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify retrieved ratings count and content
+        data = response.json()
+        self.assertEqual(len(data['ratings']), 2)
+        ratings_values = [rating['rating_value'] for rating in data['ratings']]
+        customer_ids = [rating['customer_id'] for rating in data['ratings']]
+        
+        self.assertIn(4, ratings_values)
+        self.assertIn(5, ratings_values)
+        self.assertIn(self.customer.customer_id, customer_ids)
+        self.assertIn(self.customer2.customer_id, customer_ids)
+
+    def test_invalid_customer_rating(self):
+    
+        url = reverse('add_rating', kwargs={'product_id': self.product.product_id})
+        data = {
+            'customer_id': "invalid_customer_id",
+            'rating_value': 4
+        }
+        response = self.client.post(url, json.dumps(data), content_type='application/json')
+        
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid customer ID", response.json()['error'])
+
+    def test_rating_already_given(self):
+    
+        url = reverse('add_rating', kwargs={'product_id': self.product.product_id})
+        data = {
+            'customer_id': self.customer.customer_id,
+            'rating_value': 3
+        }
+        response = self.client.post(url, json.dumps(data), content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("You have already rated this product.", response.json()['error'])
+
+    def test_delete_rating(self):
+        # Ensure the rating exists before deletion
+        rating_count_before = Rating.objects.count()
+
+        # Simulate the delete request for the rating by the owner
+        url = reverse('delete_rating', kwargs={'product_id': self.product.product_id, 'rating_id': self.rating1.rating_id})
+        data = {'customer_id': "002"}  # customer_id for the owner of the rating
+        response = self.client.delete(url, json.dumps(data), content_type='application/json')
+
+        # Ensure the response is successful (status code 204 for no content)
+        self.assertEqual(response.status_code, 204)
+
+        # Check if the rating was deleted
+        rating_count_after = Rating.objects.count()
+        self.assertEqual(rating_count_after, rating_count_before - 1)  # One less rating
+
+    def test_delete_rating_not_found(self):
+        # Ensure the rating count is correct before deletion
+        rating_count_before = Rating.objects.count()
+
+        # Simulate the delete request for a non-existent rating
+        url = reverse('delete_rating', kwargs={'product_id': self.product.product_id, 'rating_id': 999})  # Non-existent rating ID
+        data = {'customer_id': "002"}  # customer_id for the owner
+        response = self.client.delete(url, json.dumps(data), content_type='application/json')
+
+        # Ensure the response indicates that the rating was not found (status code 404)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('Rating not found.', response.json()['error'])
+
+        # Ensure the rating count remains the same (not deleted)
+        rating_count_after = Rating.objects.count()
+        self.assertEqual(rating_count_after, rating_count_before)
+
+    def test_delete_rating_invalid_customer_id(self):
+        # Ensure the rating exists before deletion
+        rating_count_before = Rating.objects.count()
+
+        # Simulate the delete request with an invalid customer ID
+        url = reverse('delete_rating', kwargs={'product_id': self.product.product_id, 'rating_id': self.rating1.rating_id})
+        data = {'customer_id': "invalid_customer_id"}  # Invalid customer ID
+        response = self.client.delete(url, json.dumps(data), content_type='application/json')
+
+        # Ensure the response indicates invalid customer ID (status code 403)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('You can only delete your own ratings.', response.json()['error'])
+
+        # Ensure the rating count remains the same (not deleted)
+        rating_count_after = Rating.objects.count()
+        self.assertEqual(rating_count_after, rating_count_before)    

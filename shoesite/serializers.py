@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
+from .models import Comment, Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,3 +59,9 @@ class RefundSerializer(serializers.ModelSerializer):
     class Meta:
         model = Refund
         fields = ['order_item', 'status', 'refunded_amount']
+
+#comment serializer
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['comment_id', 'product', 'customer', 'comment', 'approval_status']
