@@ -11,6 +11,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 import mysql.connector
 import MySQLdb
@@ -47,8 +48,29 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'shoesite',
     'django_celery_beat',
-    'rest_framework'
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework.authtoken',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -82,6 +104,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'shoesite.wsgi.application'
 
 
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
@@ -90,7 +113,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',  # Database backend
         'NAME': 'shoesite_db',          # Your MySQL database name
         'USER': 'root',         # Your MySQL username
-        'PASSWORD': '1234',     # Your MySQL password
+        'PASSWORD': 'Mj_rj-krr9',     # Your MySQL password
         'HOST': 'localhost',                   # Usually 'localhost' or IP of the database server
         'PORT': '3306',                        # Default MySQL port is 3306
     }
