@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem,SalesManager,ProductManager
+from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem,SalesManager,ProductManager,Comment
 from django.contrib.auth.models import User
 
  #new rivar
@@ -75,3 +75,9 @@ class RefundSerializer(serializers.ModelSerializer):
     class Meta:
         model = Refund
         fields = ['order_item', 'status', 'refunded_amount']
+
+#comment serializer
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['comment_id', 'product', 'customer', 'comment', 'approval_status']
