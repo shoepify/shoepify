@@ -4,19 +4,21 @@ from django.dispatch import receiver
 from .models import OrderItem, Rating, WishlistItem, Product, Discount, ShoppingCart, Wishlist, Customer
 
 
-
+# SHOPPING CART
 # Signal to create a shopping cart for each new customer
 @receiver(post_save, sender=Customer)
 def create_shopping_cart_for_customer(sender, instance, created, **kwargs):
     if created:
         ShoppingCart.objects.create(customer=instance)
 
+# WISHLIST
 # Signal to create a wishlist for each new customer
 @receiver(post_save, sender=Customer)
 def create_wishlist_for_customer(sender, instance, created, **kwargs):
     if created:
         Wishlist.objects.create(customer=instance)
 
+# PRODUCT 
 # update price if discount changes
 @receiver(post_save, sender=Discount)
 @receiver(post_delete, sender=Discount)
@@ -34,6 +36,19 @@ def update_product_on_orderitem_change(sender, instance, created, **kwargs):
 def update_product_on_orderitem_delete(sender, instance, **kwargs):
     product = instance.product
     product.update_popularity_score()
+
+# RATING
+
+# update product's avg rating with every new rating
+@receiver(post_save, sender=Rating)
+def update_product_avg_rating_on_save(sender, instance, **kwargs):
+    """
+    Update the avg_rating field in Product model when a Rating is added or updated.
+    """
+    product = instance.product
+    product.update_avg_rating()
+    product.save()
+
 
 @receiver(post_save, sender=Rating)
 def update_product_on_rating_change(sender, instance, created, **kwargs):

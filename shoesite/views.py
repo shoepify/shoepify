@@ -10,7 +10,8 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
-from rest_framework import status
+from rest_framework import viewsets, status
+from rest_framework.decorators import api_view, action, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -126,7 +127,15 @@ def signup(request):
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+<<<<<<< HEAD
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.hashers import make_password
+
+=======
 @api_view(['GET'])
+>>>>>>> c0347db301b861d8069899fb125192b9d2054fd0
 
 @permission_classes([IsAuthenticated])
 def test_token(request):
@@ -137,6 +146,28 @@ def test_token(request):
     return Response(f"Passed for {request.user.email}")
 
 #new rivar
+
+# Sign-Up
+@api_view(['POST'])
+def sign_up(request):
+    data = request.data
+    data['password'] = make_password(data.get('password'))
+    serializer = CustomerSerializer(data=data)
+    if serializer.is_valid():
+        user = serializer.save()
+        token, _ = Token.objects.get_or_create(user=user)
+        return JsonResponse({'message': 'User registered successfully', 'token': token.key}, status=201)
+    return JsonResponse(serializer.errors, status=400)
+
+# Login
+@api_view(['POST'])
+def login(request):
+    data = request.data
+    user = authenticate(username=data.get('email'), password=data.get('password'))
+    if user:
+        token, _ = Token.objects.get_or_create(user=user)
+        return JsonResponse({'token': token.key}, status=200)
+    return JsonResponse({'error': 'Invalid credentials'}, status=400)
 
 # CUSTOMER
 @csrf_exempt

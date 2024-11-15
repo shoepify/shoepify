@@ -1,33 +1,27 @@
 from django.db import models
-
-
-
-
-
 from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 # Customer Model
 class Customer(models.Model):
-    customer_id = models.CharField(max_length=50, primary_key=True)  # CharField with primary key
+
+    customer_id = models.AutoField(max_length=50, primary_key=True)  # CharField with primary key
     name = models.CharField(max_length=100)
     tax_id = models.CharField(max_length=20, unique=True, default="UNKNOWN")
-
     email = models.EmailField(max_length=100)
     password = models.CharField(max_length=100)
     home_address = models.CharField(max_length=255)
     billing_address = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15)
 
-
-def __str__(self):
-    return self.name
+    def __str__(self):
+        return self.name
 
 # Product Model
 class Product(models.Model):
 
-    product_id = models.CharField(max_length=50, primary_key=True)
+    product_id = models.AutoField(max_length=50, primary_key=True)
     model = models.CharField(max_length=100)
     serial_number = models.CharField(max_length=100)
     stock = models.IntegerField()
@@ -35,12 +29,38 @@ class Product(models.Model):
     warranty_status = models.CharField(max_length=50)
     distributor_info = models.CharField(max_length=100)
 
+    # New size attribute
+    #size = models.CharField(max_length=10)  # Adjust max_length as needed for shoe sizes
+
     description = models.TextField(default='No description available')
     category = models.CharField(max_length=100, default='Uncategorized')
     base_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-    discount = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    #discount = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    discount = models.ForeignKey('Discount', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     popularity_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    avg_rating = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+
+
+    def save(self, *args, **kwargs):
+        if self.discount:
+            self.price = self.base_price * (1 - self.discount.discount_rate)
+        else:
+            self.price = self.base_price
+
+        # Calculate avg_rating
+        self.update_avg_rating()
+
+        super().save(*args, **kwargs)
+
+    def update_avg_rating(self):
+        # Calculate the average rating
+        ratings = Rating.objects.filter(product=self)
+        if ratings.exists():
+            avg_rating = ratings.aggregate(models.Avg('rating_value'))['rating_value__avg']
+            self.avg_rating = round(avg_rating, 2)  # Round to 2 decimal places
+        else:
+            self.avg_rating = 0.0
 
 
     def update_popularity_score(self):
@@ -50,38 +70,6 @@ class Product(models.Model):
         average_rating = self.rating_set.aggregate(models.Avg('rating_value'))['rating_value__avg'] or 0
         # Example formula for calculating popularity score
         self.popularity_score = (order_items_count * 0.5) + (ratings_count * average_rating * 0.5)
-        self.save()
-'''
-class Wishlist(models.Model):
-    wishlist_id = models.AutoField(primary_key=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-'''
-
-class Order(models.Model):
-
-    description = models.TextField(default="")  # New description attribute (default = empty)
-    category = models.TextField(default="")  # New category attribute (default = empty)
-
-    # New size attribute
-    #size = models.CharField(max_length=10)  # Adjust max_length as needed for shoe sizes
-    base_price = models.DecimalField(max_digits=10, decimal_places=2) # new base price (without discount)
-    price = models.DecimalField(max_digits=10, decimal_places=2, editable=False)  # actual price with discount
-    discount = models.ForeignKey('Discount', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')  # ForeignKey to Discount
-
-
-    def save(self, *args, **kwargs):
-        if self.discount:
-            self.price = self.base_price * (1 - self.discount.discount_rate)
-        else:
-            self.price = self.base_price
-        super().save(*args, **kwargs)
-
-    def update_popularity_score(self):
-        sales_volume = self.get_sales_volume()
-        average_rating = self.get_average_rating()
-        wishlist_additions = self.get_wishlist_additions()
-        w1, w2, w3 = 0.5, 0.3, 0.2
-        self.popularity_score = (w1 * sales_volume) + (w2 * average_rating) + (w3 * wishlist_additions)
         self.save()
 
     def get_sales_volume(self):
@@ -93,6 +81,7 @@ class Order(models.Model):
 
     def get_wishlist_additions(self):
         return WishlistItem.objects.filter(product=self).count()
+
 
 # Wishlist Model
 class Wishlist(models.Model):
@@ -123,7 +112,7 @@ class OrderItem(models.Model):
 # ShoppingCart Model
 class ShoppingCart(models.Model):
     cart_id = models.AutoField(primary_key=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    customer = models.OneToOneField(Customer, on_delete=models.CASCADE)
 
 class CartItem(models.Model):
     cart_item_id = models.AutoField(primary_key=True)
@@ -133,7 +122,7 @@ class CartItem(models.Model):
 
 class Invoice(models.Model):
     invoice_id = models.AutoField(primary_key=True)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.OneToOneField(Order, on_delete=models.CASCADE)
     invoice_date = models.DateField()
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -162,13 +151,10 @@ class ProductManager(models.Model):
 # Discount Model (without direct reference to Product)
 class Discount(models.Model):
     discount_id = models.AutoField(primary_key=True)
-
-
     # NO need for product as foreign key since discount can be for many products
     #product = models.ForeignKey(Product, on_delete=models.CASCADE)
     discount_name = models.CharField(max_length=100)
     discount_rate = models.DecimalField(max_digits=4, decimal_places=2, default=0.00)
-    
     start_date = models.DateField()
     end_date = models.DateField()
 
