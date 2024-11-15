@@ -1,7 +1,20 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Comment, Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem
+from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem,SalesManager,ProductManager,Comment
+from django.contrib.auth.models import User
 
+ #new rivar
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta(object):
+        model = User
+        fields = ['id', 'username', 'email', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+
+ #new rivar
+
+
+    
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
@@ -10,12 +23,15 @@ class CustomerSerializer(serializers.ModelSerializer):
             'home_address', 'billing_address', 'phone_number'
         ]
 
+        
+        
+
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['product_id', 'model', 'serial_number', 'stock', 'inventory_to_stock', 
-                  'warranty_status', 'distributor_info', 'description', 'category', 
-                  'base_price', 'price', 'discount']  # Include new fields
+                  'warranty_status', 'distributor_info', 'description', 'base_price', 
+                  'price', 'popularity_score', 'category']
 
 
 # Shopping Cart and Cart Item Serializers
