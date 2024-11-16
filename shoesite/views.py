@@ -25,9 +25,17 @@ from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.hashers import make_password
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import authenticate
+from .models import Customer
+from .serializers import CustomerSerializer
 #new rivar
 
-"""
+
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -37,6 +45,7 @@ def get_tokens_for_user(user):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
+    
 @api_view(['POST'])
 def login(request):
     email = request.data.get('email')
@@ -127,15 +136,8 @@ def signup(request):
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-<<<<<<< HEAD
-from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth import authenticate
-from rest_framework.authtoken.models import Token
-from django.contrib.auth.hashers import make_password
 
-=======
 @api_view(['GET'])
->>>>>>> c0347db301b861d8069899fb125192b9d2054fd0
 
 @permission_classes([IsAuthenticated])
 def test_token(request):
@@ -144,7 +146,7 @@ def test_token(request):
     print(f"Token: {request.auth}")
 
     return Response(f"Passed for {request.user.email}")
-
+"""
 #new rivar
 
 # Sign-Up
@@ -158,7 +160,6 @@ def sign_up(request):
         token, _ = Token.objects.get_or_create(user=user)
         return JsonResponse({'message': 'User registered successfully', 'token': token.key}, status=201)
     return JsonResponse(serializer.errors, status=400)
-
 # Login
 @api_view(['POST'])
 def login(request):

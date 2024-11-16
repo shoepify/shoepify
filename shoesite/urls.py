@@ -9,6 +9,8 @@ from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist,
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
 from shoesite.views.comment_views import add_comment, get_comments, delete_comment
+from . import views
+from django.urls import re_path
 
 from .views import product_views  # or wherever your search_products view is located
 
@@ -34,6 +36,7 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from . import views
 from rest_framework.routers import DefaultRouter
+from .views import login, signup
 
 #from .views import CustomerViewSet, WishlistViewSet, RefundViewSet
 
@@ -50,8 +53,8 @@ urlpatterns = [
     path('customer/create/', create_customer, name='create_customer'),
 
     # sign up / login
-    path('auth/signup/', views.sign_up, name='sign_up'),
-    path('auth/login/', views.login, name='login'),
+    ## path('auth/signup/', views.sign_up, name='sign_up'),
+    ## path('auth/login/', views.login, name='login'),
 
     # Product paths
     path('products/search/', product_views.search_products, name='search_products'),

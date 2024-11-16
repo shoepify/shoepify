@@ -6,7 +6,7 @@ import json
 from django.db.models import Q  # Add this to enable complex query filtering
 
 
-from .models import Comment
+from shoesite.models import Comment
 #from .serializers import CommentSerializer
 
 

@@ -1,7 +1,7 @@
 # ratings_views.py
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
-from .models import Customer, OrderItem, Rating
+from shoesite.models import Customer, OrderItem, Rating
 import json
 
 
