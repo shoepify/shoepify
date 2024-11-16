@@ -17,8 +17,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
-
+   
     class Meta:
         model = Product
         fields = [
@@ -31,15 +30,10 @@ class ProductSerializer(serializers.ModelSerializer):
             'description',
             'base_price',
             'price',
-            'image_url'  # Include the image URL
+            
         ]
 
-    def get_image_url(self, obj):
-        request = self.context.get('request')
-        if obj.image and request:
-            return request.build_absolute_uri(obj.image.url)
-        return None
-
+ 
 # Shopping Cart and Cart Item Serializers
 class CartItemSerializer(serializers.ModelSerializer):
     product_id = serializers.CharField(source='product.product_id')

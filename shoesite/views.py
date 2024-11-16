@@ -23,7 +23,7 @@ from .serializers import CustomerSerializer, WishlistSerializer, RefundSerialize
 def get_customer(request, customer_id):
     if request.method == 'GET':
         customer = get_object_or_404(Customer, customer_id=customer_id)
-        return JsonResponse({'customer_id': customer.customer_id, 'name': customer.name, 'tax_id': customer.tax_id, 'email': customer.email, 'home_address': customer.home_address, 'billing_address': customer.billing_address, 'phone_numer': customer.phone_number})
+        return JsonResponse({'customer_id': customer.customer_id, 'name': customer.name})
 
 @csrf_exempt
 def create_customer(request):

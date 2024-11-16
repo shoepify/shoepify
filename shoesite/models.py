@@ -35,11 +35,6 @@ class Product(models.Model):
     base_price = models.DecimalField(decimal_places=2, max_digits=10)
     price = models.DecimalField(decimal_places=2, max_digits=10)
     popularity_score = models.DecimalField(decimal_places=2, default=0.0, max_digits=5)
-    
-    image = models.ImageField(upload_to='product_images/', null=True, blank=True)
-    discount = models.ForeignKey(
-        'Discount', on_delete=models.SET_NULL, blank=True, null=True, related_name='products'
-    )
 
     def save(self, *args, **kwargs):
         # Calculate price based on discount, if any
