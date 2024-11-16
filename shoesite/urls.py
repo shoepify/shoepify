@@ -1,7 +1,7 @@
 # shoesite/urls.py
 
 
-from django.urls import path
+from django.urls import path, include, re_path
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
 from shoesite.views.cart_views import add_to_cart, remove_from_cart, get_cart
@@ -9,10 +9,16 @@ from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist,
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
 from shoesite.views.comment_views import add_comment, get_comments, delete_comment
+from shoesite.views.auth_views import login, signup, get_tokens_for_user, test_token
+#from shoesite.views import login, signup
+from rest_framework_simplejwt.views import TokenRefreshView
+from django.contrib import admin
 from . import views
-from django.urls import re_path
-
+from rest_framework.routers import DefaultRouter
+from . import views
 from .views import product_views  # or wherever your search_products view is located
+#from .views import CustomerViewSet, WishlistViewSet, RefundViewSet
+
 
 """
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -29,25 +35,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-
-# urls.py
-from rest_framework_simplejwt.views import TokenRefreshView
-from django.contrib import admin
-from django.urls import path, include, re_path
-from . import views
-from rest_framework.routers import DefaultRouter
-from .views import login, signup
-
-#from .views import CustomerViewSet, WishlistViewSet, RefundViewSet
-
-
 urlpatterns = [
 
     #login path
-    re_path('login',views.login),
-    re_path('signup',views.signup),
-    re_path('test_token',views.test_token),
+    re_path('login',login),
+    re_path('signup',signup),
+    re_path('test_token',test_token),
     re_path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
     # customer paths
     path('customer/<int:customer_id>/', get_customer, name='get_customer'),
     path('customer/create/', create_customer, name='create_customer'),

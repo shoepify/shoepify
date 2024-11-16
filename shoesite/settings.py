@@ -14,7 +14,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 import mysql.connector
-import MySQLdb
+#import MySQLdb
 import pymysql
 # Use pymysql as MySQLdb
 pymysql.install_as_MySQLdb()
@@ -113,7 +113,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',  # Database backend
         'NAME': 'shoesite_db',          # Your MySQL database name
         'USER': 'root',         # Your MySQL username
-        'PASSWORD': 'Mj_rj-krr9',     # Your MySQL password
+        'PASSWORD': '1234',     # Your MySQL password
         'HOST': 'localhost',                   # Usually 'localhost' or IP of the database server
         'PORT': '3306',                        # Default MySQL port is 3306
     }
