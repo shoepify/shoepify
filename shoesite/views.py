@@ -26,13 +26,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.hashers import make_password
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth import authenticate
-from .models import Customer
-from .serializers import CustomerSerializer
 #new rivar
 
 
@@ -82,7 +76,7 @@ def login(request):
         except Customer.DoesNotExist:
             return Response({'error': 'Invalid credentials'},
                           status=status.HTTP_404_NOT_FOUND)
-'''
+    '''
     if not check_password(password, user.password):
         return Response({'error': 'Invalid credentials'},
                       status=status.HTTP_404_NOT_FOUND)

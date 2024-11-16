@@ -6,7 +6,7 @@ from django.dispatch import receiver
 # Customer Model
 class Customer(models.Model):
 
-    customer_id = models.AutoField(max_length=50, primary_key=True)  # CharField with primary key
+    customer_id = models.AutoField(primary_key=True)  # CharField with primary key
     name = models.CharField(max_length=100)
     tax_id = models.CharField(max_length=20, unique=True, default="UNKNOWN")
     email = models.EmailField(max_length=100)
@@ -21,7 +21,7 @@ class Customer(models.Model):
 # Product Model
 class Product(models.Model):
 
-    product_id = models.AutoField(max_length=50, primary_key=True)
+    product_id = models.AutoField(primary_key=True)
     model = models.CharField(max_length=100)
     serial_number = models.CharField(max_length=100)
     stock = models.IntegerField()
