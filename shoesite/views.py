@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
 from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 
 
 
@@ -223,4 +224,21 @@ def approve_refund(request, refund_id):
 
 # Make sure to define the URL patterns for these new views in your urls.py
 
+
+#Search Product
+def search_products(request):
+    query = request.GET.get('q', '')
+    if not query:
+        return JsonResponse({"error": "Search query parameter 'q' is required"}, status=400)
+
+    # Perform case-insensitive search on 'model' and 'description'
+    products = Product.objects.filter(
+        Q(model__icontains=query) | Q(description__icontains=query)
+    )
+
+    # Serialize the results
+    serializer = ProductSerializer(products, many=True)
+    return JsonResponse(serializer.data, safe=False, status=200)
+
+    
 

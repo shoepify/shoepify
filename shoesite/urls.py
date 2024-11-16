@@ -26,7 +26,7 @@ from django.conf.urls.static import static
 from .views import ProductViewSet, list_products
 
 
-from .views import get_customer, create_customer, add_to_cart,  add_to_wishlist, remove_from_cart, get_cart, remove_from_wishlist, get_wishlist, request_refund, approve_refund, create_product, get_product, update_product, delete_product, list_products
+from .views import get_customer, create_customer, add_to_cart,  add_to_wishlist, remove_from_cart, get_cart, remove_from_wishlist, get_wishlist, request_refund, approve_refund, create_product, get_product, update_product, delete_product, list_products, search_products
 
 
 router = DefaultRouter()
@@ -44,6 +44,7 @@ urlpatterns = [
     path('products/<str:product_id>/', get_product, name='get_product'),
     path('products/<str:product_id>/update/', update_product, name='update_product'),
     path('products/<str:product_id>/delete/', delete_product, name='delete_product'),
+    path('products/search/', search_products, name='search_products'),
 
     # Shopping Cart paths
     path('cart/<str:customer_id>/add/<str:product_id>/', views.add_to_cart, name='add_to_cart'),
