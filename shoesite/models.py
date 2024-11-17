@@ -14,6 +14,7 @@ class Customer(models.Model):
     home_address = models.CharField(max_length=255)
     billing_address = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15)
+    is_active = models.BooleanField(default=True)  # Add default value
 
     def __str__(self):
         return self.name
