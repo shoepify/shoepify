@@ -1,7 +1,8 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem,SalesManager,ProductManager,Comment
+from .models import Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem,SalesManager,ProductManager,Comment, Guest
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 
  #new rivar
 class UserSerializer(serializers.ModelSerializer):
@@ -15,16 +16,34 @@ class UserSerializer(serializers.ModelSerializer):
 
 
     
+# User Serializers
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
-        fields = [
-            'customer_id', 'password', 'name', 'tax_id', 'email',
-            'home_address', 'billing_address', 'phone_number'
-        ]
+        fields = ['id', 'name', 'tax_id', 'email', 'password', 'home_address']
+    
+    extra_kwargs = {
+        'password': {'write_only': True},  # Ensure password is only used for write operations
+        'email': {'required': True},  # Ensure email is required
+    }
 
-        
-        
+
+
+class SalesManagerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SalesManager
+        fields = ['manager_id', 'password', 'name', 'email']
+
+class ProductManagerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductManager
+        fields = ['manager_id', 'password', 'name', 'email']
+
+class GuestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Guest
+        fields = ['guest_id', 'session_id', 'created_at']
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -43,12 +62,24 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ['product_id', 'quantity']
 
+
+# Shopping Cart Serializer
 class ShoppingCartSerializer(serializers.ModelSerializer):
     cart_items = CartItemSerializer(many=True, source='cartitem_set')
+    owner = serializers.SerializerMethodField()
 
     class Meta:
         model = ShoppingCart
-        fields = ['customer', 'cart_items']
+        fields = ['owner', 'cart_items']
+
+    def get_owner(self, obj):
+        """Return the serialized owner based on whether it's a Customer or Guest."""
+        if isinstance(obj.owner, Customer):
+            return CustomerSerializer(obj.owner).data
+        elif isinstance(obj.owner, Guest):
+            return GuestSerializer(obj.owner).data
+        return None  # Handle case where there's no owner
+
 
 
 

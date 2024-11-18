@@ -4,7 +4,7 @@ import json
 from django.http import JsonResponse
 from rest_framework import status
 from .models import Customer, Order, OrderItem, Product, Wishlist, WishlistItem, ShoppingCart, CartItem, Comment, Rating
-"""
+
 # customer 
 class CustomerModelTests(TestCase):
     def setUp(self):
@@ -522,7 +522,7 @@ class CommentTests(TestCase):
         # Ensure the comment count remains the same (not deleted)
         comment_count_after = Comment.objects.count()
         self.assertEqual(comment_count_after, comment_count_before)
-        """
+        
 
 class RatingTests(TestCase):
 
