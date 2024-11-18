@@ -4,7 +4,8 @@ from django.http import JsonResponse
 from shoesite.models import ProductManager
 from shoesite.serializers import ProductManagerSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.hashers import make_password, check_password
@@ -21,16 +22,17 @@ def get_tokens_for_user(user):
 
 # sign up
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def signup_product_manager(request):
     if request.method == 'POST':
         serializer = ProductManagerSerializer(data=request.data)
         if serializer.is_valid():
             # Ensure password is hashed before saving
-            password = request.data.get('password')
-            if password:
-                request.data['password'] = make_password(password)
+            validated_data = serializer.validated_data
+            validated_data['password'] = make_password(validated_data['password'])
 
-            product_manager = serializer.save()
+            # Save the product manager with hashed password
+            product_manager = ProductManager.objects.create(**validated_data)
 
             # Generate tokens after successfully saving the user
             tokens = get_tokens_for_user(product_manager)
@@ -43,9 +45,10 @@ def signup_product_manager(request):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 # login
 @api_view(['POST'])
+@permission_classes([AllowAny])
+
 def login_product_manager(request):
     email = request.data.get('email')
     password = request.data.get('password')
@@ -57,14 +60,15 @@ def login_product_manager(request):
     try:
         user = ProductManager.objects.get(email=email)
     except ProductManager.DoesNotExist:
-        return Response({'error': 'Invalid credentials'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
     if not check_password(password, user.password):
-        return Response({'error': 'Invalid credentials'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
     tokens = get_tokens_for_user(user)
     return Response({
+        'message': 'Login successful',
         'tokens': tokens,
         'user': ProductManagerSerializer(user).data
-    })
+    }, status=status.HTTP_200_OK)
 
