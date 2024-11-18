@@ -10,6 +10,9 @@ from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
 from shoesite.views.comment_views import add_comment, get_comments, delete_comment
 from shoesite.views.auth_views import login, signup, get_tokens_for_user, test_token
+from shoesite.views.customer_views import signup_customer, login_customer
+from shoesite.views.pm_views import signup_product_manager, login_product_manager
+from shoesite.views.sm_views import signup_sales_manager, login_sales_manager
 #from shoesite.views import login, signup
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
@@ -37,11 +40,23 @@ Including another URLconf
 
 urlpatterns = [
 
+    # rivar login sign up
     #login path
-    re_path('login',login),
-    re_path('signup',signup),
-    re_path('test_token',test_token),
-    re_path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    #re_path('login',login),
+    #re_path('signup',signup),
+    #re_path('test_token',test_token),
+    #re_path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # login paths for customer, pm, sm
+    path('login/customer/', login_customer, name='login_customer'),
+    path('login/product_manager/', login_product_manager, name='login_product_manager'),
+    path('login/sales_manager/', login_sales_manager, name='login_sales_manager'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # sign up paths for customer, sm, pm
+    path('signup/customer/', signup_customer, name='signup_customer'),
+    path('signup/sales_manager/', signup_sales_manager, name='signup_sales_manager'),
+    path('signup/product_manager/', signup_product_manager, name='signup_product_manager'),
 
     # customer paths
     path('customer/<int:customer_id>/', get_customer, name='get_customer'),
@@ -63,7 +78,7 @@ urlpatterns = [
     # Shopping Cart paths
     path('cart/<int:customer_id>/add/<int:product_id>/', add_to_cart, name='add_to_cart'),
     path('cart/<int:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
-    path('cart/<int:customer_id>/', get_cart, name='get_cart'),
+    path('cart/<int:user_id>/', get_cart, name='get_cart'),
 
     # Wishlist paths
     path('wishlist/<int:customer_id>/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),

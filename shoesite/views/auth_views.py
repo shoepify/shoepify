@@ -46,6 +46,7 @@ def login(request):
                       status=status.HTTP_400_BAD_REQUEST)
     user=User.objects.get(email=email)
     serializer=UserSerializer
+    
     '''
     # Check user type based on email domain
     if email.endswith('@sm.com'):
@@ -72,7 +73,7 @@ def login(request):
         except Customer.DoesNotExist:
             return Response({'error': 'Invalid credentials'},
                           status=status.HTTP_404_NOT_FOUND)
-'''
+    '''
     if not check_password(password, user.password):
         return Response({'error': 'Invalid credentials'},
                       status=status.HTTP_404_NOT_FOUND)

@@ -1,7 +1,9 @@
 # signals.py
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from .models import OrderItem, Rating, WishlistItem, Product, Discount, ShoppingCart, Wishlist, Customer
+from .models import OrderItem, Rating, WishlistItem, Product, Discount, ShoppingCart, Wishlist, Customer, Guest
+from django.contrib.contenttypes.models import ContentType
+
 
 
 # SHOPPING CART
@@ -9,7 +11,22 @@ from .models import OrderItem, Rating, WishlistItem, Product, Discount, Shopping
 @receiver(post_save, sender=Customer)
 def create_shopping_cart_for_customer(sender, instance, created, **kwargs):
     if created:
-        ShoppingCart.objects.create(customer=instance)
+        content_type = ContentType.objects.get_for_model(instance)
+        ShoppingCart.objects.create(
+            owner_content_type=content_type,
+            owner_object_id=instance.pk
+        )
+
+# Signal to create a shopping cart for each new guest
+@receiver(post_save, sender=Guest)
+def create_shopping_cart_for_guest(sender, instance, created, **kwargs):
+    if created:
+        content_type = ContentType.objects.get_for_model(instance)
+        ShoppingCart.objects.create(
+            owner_content_type=content_type,
+            owner_object_id=instance.pk
+        )
+
 
 # WISHLIST
 # Signal to create a wishlist for each new customer
