@@ -88,7 +88,7 @@ def login_customer(request):
 @csrf_exempt
 def get_customer(request, customer_id):
     if request.method == 'GET':
-        customer = get_object_or_404(Customer, id=customer_id)
+        customer = get_object_or_404(Customer, customer_id=customer_id)
         return JsonResponse({'customer_id': customer.id, 'name': customer.name})
 
 @csrf_exempt

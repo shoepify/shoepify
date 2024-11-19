@@ -63,7 +63,7 @@ class Product(models.Model):
     model = models.CharField(max_length=100)
     serial_number = models.CharField(max_length=100)
     stock = models.IntegerField()
-    inventory_to_stock = models.IntegerField()
+    #inventory_to_stock = models.IntegerField()
     warranty_status = models.CharField(max_length=50)
     distributor_info = models.CharField(max_length=100)
 
@@ -92,7 +92,7 @@ class Product(models.Model):
         # Calculate avg_rating
         self.update_avg_rating()
 
-        super().save(*args, **kwargs)
+        #super().save(*args, **kwargs)
 
         # Save again to ensure avg_rating is updated in the database
         super().save(update_fields=['avg_rating'])
