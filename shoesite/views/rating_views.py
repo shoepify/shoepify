@@ -30,12 +30,13 @@ def add_rating(request, product_id):
         if Rating.objects.filter(customer_id=customer_id, product_id=product_id).exists():
             return JsonResponse({"error": "You have already rated this product."}, status=400)
         
+        """
         # Check if the customer has purchased the product
         has_purchased = OrderItem.objects.filter(order__customer_id=customer_id, product__product_id=product_id).exists()
         
         if not has_purchased:
             return JsonResponse({"error": "You cannot rate a product before buying it."}, status=403)
-        
+        """
         # Save the rating (no approval status needed for ratings)
         rating = Rating.objects.create(
             product_id=product_id,
@@ -65,6 +66,7 @@ def get_ratings(request, product_id):
     
     return JsonResponse({"error": "Invalid request."}, status=400)
 
+@csrf_exempt
 def delete_rating(request, product_id, rating_id):
     if request.method == 'DELETE':
         try:
@@ -75,8 +77,8 @@ def delete_rating(request, product_id, rating_id):
             data = json.loads(request.body)
             customer_id = data.get('customer_id')
 
-            # Check if the customer is the one who made the rating
-            if str(rating.customer.customer_id) != customer_id:
+            # Convert customer_id to integer for proper comparison
+            if int(rating.customer.customer_id) != int(customer_id):
                 return JsonResponse({'error': 'You can only delete your own ratings.'}, status=403)
 
             # Proceed to delete the rating
@@ -88,5 +90,5 @@ def delete_rating(request, product_id, rating_id):
             return JsonResponse({'error': 'Rating not found.'}, status=404)
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON.'}, status=400)
-
-# Make sure to define the URL patterns for these new views in your urls.py
+        except ValueError:
+            return JsonResponse({'error': 'Invalid customer_id provided.'}, status=400)

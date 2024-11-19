@@ -24,11 +24,12 @@ def add_comment(request, product_id):
             return JsonResponse({"error": "Invalid customer ID."}, status=400)
         
         # Check if the customer has purchased the product
+        """
         has_purchased = OrderItem.objects.filter(order__customer_id=customer_id, product__product_id=product_id).exists()
         
         if not has_purchased:
             return JsonResponse({"error": "You cannot give comment before buying it."}, status=403)
-        
+        """
         # Check if the customer has already commented on this product
         if Comment.objects.filter(customer_id=customer_id, product_id=product_id).exists():
             return JsonResponse({"error": "You have already commented on this product."}, status=400)
@@ -65,6 +66,7 @@ def get_comments(request, product_id):
     
     return JsonResponse({"error": "Invalid request."}, status=400)
 
+@csrf_exempt
 def delete_comment(request, product_id, comment_id):
     if request.method == 'DELETE':
         try:
@@ -76,8 +78,8 @@ def delete_comment(request, product_id, comment_id):
             
             customer_id = data.get('customer_id')
 
-            # Check if the customer is the one who made the comment
-            if str(comment.customer.customer_id) != customer_id:
+            # Ensure customer_id is an integer before comparing
+            if int(comment.customer.customer_id) != int(customer_id):
                 return JsonResponse({'error': 'You can only delete your own comments.'}, status=403)
 
             # Proceed to delete the comment
@@ -89,6 +91,8 @@ def delete_comment(request, product_id, comment_id):
             return JsonResponse({'error': 'Comment not found.'}, status=404)
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+        except ValueError:
+            return JsonResponse({'error': 'Invalid customer_id. It should be an integer.'}, status=400)
         
 def get_pending_comments(request):
     if request.user.is_authenticated and isinstance(request.user, ProductManager):
