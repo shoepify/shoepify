@@ -30,14 +30,18 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class SalesManagerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SalesManager
-        fields = ['manager_id', 'password', 'name', 'email']
-
-class ProductManagerSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)  # Include 'id' as a read-only field
+    
     class Meta:
         model = ProductManager
-        fields = ['manager_id', 'password', 'name', 'email']
+        fields = ['id', 'manager_id', 'password', 'name', 'email']
+
+class ProductManagerSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)  # Include 'id' as a read-only field
+    
+    class Meta:
+        model = ProductManager
+        fields = ['id', 'manager_id', 'password', 'name', 'email']
 
 class GuestSerializer(serializers.ModelSerializer):
     class Meta:

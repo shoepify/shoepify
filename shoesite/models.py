@@ -28,6 +28,10 @@ class SalesManager(models.Model):
     email = models.EmailField(max_length=100)
     #phone_number = models.CharField(max_length=15)
     password = models.CharField(max_length=100)
+    id = property(lambda self: self.manager_id)
+
+    def __str__(self):
+        return self.name
     
 
 # ProductManager Model
@@ -37,6 +41,10 @@ class ProductManager(models.Model):
     email = models.EmailField(max_length=100)
     #phone_number = models.CharField(max_length=15)
     password = models.CharField(max_length=100)
+    id = property(lambda self: self.manager_id)
+
+    def __str__(self):
+        return self.name
 
 # Guest User Model
 class Guest(models.Model):
