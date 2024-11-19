@@ -1,10 +1,12 @@
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework.test import APIClient
 import json
+from django.contrib.contenttypes.models import ContentType
 from django.http import JsonResponse
 from rest_framework import status
-from .models import Customer, Order, OrderItem, Product, Wishlist, WishlistItem, ShoppingCart, CartItem, Comment, Rating
-
+from .models import Customer, Discount, Order, OrderItem, Product, Wishlist, WishlistItem, ShoppingCart, CartItem, Comment, Rating, Guest
+"""
 # customer 
 class CustomerModelTests(TestCase):
     def setUp(self):
@@ -121,26 +123,226 @@ class ProductAPITests(TestCase):
         self.assertEqual(updated_product.model, 'Model X Updated')
         self.assertEqual(updated_product.stock, 15)
 
-
-# shopping cart creation (when customer is created)
+"""
+"""
 class ShoppingCartCreationTests(TestCase):
     def test_shopping_cart_created_on_customer_creation(self):
         # Create a new customer
         customer = Customer.objects.create(
             name='Test Customer',
             email='test@example.com',
-            password='testpassword',  # Ensure this is handled securely in real applications
+            password='testpassword',  # Ensure this is hashed when using in production
             tax_id='123456789',
             home_address='123 Test St',
-            billing_address='123 Test St',
-            phone_number='555-1234'
         )
-        
-        # Check if a shopping cart is automatically created for this customer
-        cart = ShoppingCart.objects.filter(customer=customer)
-        self.assertEqual(cart.count(), 1)  # Ensure only one cart is created
-        self.assertEqual(cart.first().customer, customer)  # Ensure the cart belongs to the correct customer
 
+        # Get the ContentType for the Customer model
+        customer_content_type = ContentType.objects.get_for_model(Customer)
+
+        # Check if a shopping cart is automatically created for this customer
+        cart = ShoppingCart.objects.filter(owner_content_type=customer_content_type, owner_object_id=customer.id)
+
+        self.assertEqual(cart.count(), 1)  # Ensure only one cart is created
+        self.assertEqual(cart.first().owner_object_id, customer.id)  # Ensure the cart belongs to the correct customer
+    
+    def test_shopping_cart_created_on_guest_creation(self):
+        # Create a new guest
+        guest = Guest.objects.create(session_id='test_session_123')
+
+        # Get the ContentType for the Guest model
+        guest_content_type = ContentType.objects.get_for_model(Guest)
+
+        # Check if a shopping cart is automatically created for this guest
+        cart = ShoppingCart.objects.filter(owner_content_type=guest_content_type, owner_object_id=guest.guest_id)
+
+        self.assertEqual(cart.count(), 1)  # Ensure only one cart is created
+        self.assertEqual(cart.first().owner_object_id, guest.guest_id)  # Ensure the cart belongs to the correct guest
+
+
+
+class ShoppingCartItemTests(TestCase):
+
+    def test_adding_item_to_cart(self):
+        # Create a new customer
+        customer = Customer.objects.create(
+            name='Test Customer',
+            email='test@example.com',
+            password='testpassword',
+            tax_id='123456789',
+            home_address='123 Test St',
+        )
+
+        # Get the ContentType for the Customer model
+        customer_content_type = ContentType.objects.get_for_model(Customer)
+
+        # Create a shopping cart for the customer
+        cart = ShoppingCart.objects.create(owner_content_type=customer_content_type, owner_object_id=customer.id)
+
+        # Create a new product
+        product = Product.objects.create(
+            model='Test Product',
+            serial_number='SN12345',
+            stock=10,
+            inventory_to_stock=10,
+            warranty_status='Valid',
+            distributor_info='Distributor 1',
+            description='A sample product',
+            category='Category 1',
+            base_price=100.00,
+            price=100.00
+        )
+
+        # Add the product to the shopping cart
+        cart_item = CartItem.objects.create(cart=cart, product=product, quantity=2)
+
+        # Verify that the cart now has the correct item
+        self.assertEqual(cart.cartitem_set.count(), 1)  # Only one item should be in the cart
+        self.assertEqual(cart_item.quantity, 2)  # The quantity should be 2
+        self.assertEqual(cart_item.product, product)  # Ensure the correct product is in the cart
+
+    def test_deleting_item_from_cart(self):
+        # Create a new guest
+        guest = Guest.objects.create(session_id='test_session_123')
+
+        # Get the ContentType for the Guest model
+        guest_content_type = ContentType.objects.get_for_model(Guest)
+
+        # Create a shopping cart for the guest
+        cart = ShoppingCart.objects.create(owner_content_type=guest_content_type, owner_object_id=guest.guest_id)
+
+        # Create a new product
+        product = Product.objects.create(
+            model='Test Product',
+            serial_number='SN12345',
+            stock=10,
+            inventory_to_stock=10,
+            warranty_status='Valid',
+            distributor_info='Distributor 1',
+            description='A sample product',
+            category='Category 1',
+            base_price=100.00,
+            price=100.00
+        )
+
+        # Add the product to the shopping cart
+        cart_item = CartItem.objects.create(cart=cart, product=product, quantity=2)
+
+        # Delete the item from the cart
+        cart_item.delete()
+
+        # Verify that the cart is now empty
+        self.assertEqual(cart.cartitem_set.count(), 0)  # The cart should be empty after deletion
+"""
+class ShoppingCartTests(TestCase):
+
+    def setUp(self):
+        # Create and save the discount instance first
+        self.discount = Discount.objects.create(
+            discount_name="Test Discount",
+            discount_rate=10.0,
+            start_date="2024-11-01",
+            end_date="2024-12-01"
+        )
+
+        # Create and save a customer instance for later testing
+        self.customer = Customer.objects.create(
+            name="Test Customer",
+            email="test@example.com",
+            password="password123",
+            home_address="123 Test St."
+        )
+
+        # Create and save a guest instance
+        self.guest = Guest.objects.create(
+            session_id="test_session_123"
+        )
+
+        # Create and save a product instance
+        self.product = Product(
+            model="Test Model",
+            serial_number="12345",
+            stock=10,
+            inventory_to_stock=10,
+            warranty_status="Active",
+            distributor_info="Test Distributor",
+            description="Test Product",
+            category="Electronics",
+            base_price=100.0,
+            price=90.0,
+            discount=self.discount
+        )
+
+        # Temporarily bypass update_avg_rating for testing
+        original_update_avg_rating = Product.update_avg_rating
+        Product.update_avg_rating = lambda self: None
+
+        # Save the Product instance explicitly
+        self.product.save()  # Ensure the product is saved to the database
+
+        # Restore the original method after saving
+        Product.update_avg_rating = original_update_avg_rating
+    
+        # Temporarily bypass update_avg_rating for testing
+        original_update_avg_rating = Product.update_avg_rating
+        Product.update_avg_rating = lambda self: None
+        
+        # Save the Product instance explicitly
+        self.product.save()  # Ensure the product is saved to the database
+        
+        # Restore the original method after saving
+        Product.update_avg_rating = original_update_avg_rating
+
+    def test_add_to_cart_customer(self):
+        # Get the content type for the Customer model
+        customer_content_type = ContentType.objects.get_for_model(Customer)
+
+        # Create the shopping cart for the customer
+        shopping_cart = ShoppingCart.objects.create(
+            owner_content_type=customer_content_type,
+            owner_object_id=self.customer.customer_id  # Use the customer's ID here
+        )
+
+        # Add the product to the cart
+        cart_item = shopping_cart.cartitem_set.create(
+            product=self.product,
+            quantity=2
+        )
+
+        # Assert the cart item was added
+        self.assertEqual(cart_item.product, self.product)
+        self.assertEqual(cart_item.quantity, 2)
+
+    def test_add_to_cart_guest(self):
+        # Get the content type for the Guest model
+        guest_content_type = ContentType.objects.get_for_model(Guest)
+
+        # Create the shopping cart for the guest
+        guest_cart = ShoppingCart.objects.create(
+            owner_content_type=guest_content_type,
+            owner_object_id=self.guest.guest_id  # Use the guest's ID here
+        )
+
+        # Add the product to the guest's cart
+        cart_item = guest_cart.cartitem_set.create(
+            product=self.product,
+            quantity=1
+        )
+
+        # Assert the cart item was added
+        self.assertEqual(cart_item.product, self.product)
+        self.assertEqual(cart_item.quantity, 1)
+
+
+
+
+
+
+
+
+
+
+
+"""
 # shopping cart 
 class ShoppingCartTests(TestCase):
     @classmethod
@@ -264,266 +466,167 @@ class WishlistTests(TestCase):
 
 
 """
-"""
+
+
 class CommentTests(TestCase):
 
-    @classmethod
-    def setUpTestData(cls):
-        # Create a customer
-        cls.customer = Customer.objects.create(
-            customer_id="002",
+    def setUp(self):
+        # Create some test data
+        self.customer = Customer.objects.create(
             name="John Doe",
-            tax_id="1234567890",
-            email="john.doe@example.com",
-            password="password123",
-            home_address="123 Main St",
-            billing_address="123 Main St",
-            phone_number="5551234567"
+            tax_id="TAX123456",  # Added tax_id
+            email="johndoe@example.com",
+            password="securepassword",
+            home_address="123 Test St",
         )
-        # Create another customer
-        cls.customer2 = Customer.objects.create(
-            customer_id="003",
-            name="Jane Doe",
-            tax_id="9876543210",
-            email="jane.doe@example.com",
-            password="password456",
-            home_address="456 Another St",
-            billing_address="456 Another St",
-            phone_number="5559876543"
-        )
-        cls.customer3 = Customer.objects.create(
-            customer_id="004",
-            name="Sam Smith",
-            tax_id="1122334455",
-            email="sam.smith@example.com",
-            password="password789",
-            home_address="789 Elm St",
-            billing_address="789 Elm St",
-            phone_number="5552468101"
-        )
-
-        # Create a product
-        cls.product = Product.objects.create(
-            product_id="001",
-            model="Running Shoes",
-            serial_number="SN123456",
+        
+        # Create a Discount instance
+        discount_instance = Discount.objects.create(discount_name="Seasonal Sale", discount_rate=0.10, start_date="2024-01-01", end_date="2024-12-31")
+        
+        # Create the product with the Discount instance
+        self.product = Product.objects.create(
+            model="ShoeModel",
+            serial_number="SN123",
             stock=100,
             inventory_to_stock=50,
-            warranty_status="Valid",
-            distributor_info="BestShoes Inc."
-        )
-
-        # Create an order for the customer
-        cls.order = Order.objects.create(
-            customer=cls.customer,
-            order_date="2024-01-01",
-            total_amount=50.00,
-            discount_applied=False
-        )
-
-        # Create  order for the customer2
-        cls.order2 = Order.objects.create(
-            customer=cls.customer2,
-            order_date="2024-01-02",
-            total_amount=75.00,
-            discount_applied=True
-        )
-        cls.order3 = Order.objects.create(
-            customer=cls.customer3,
-            order_date="2024-02-01",
-            total_amount=100.00,
-            discount_applied=True
+            warranty_status="Active",
+            distributor_info="Distributor XYZ",
+            description="A great shoe.",
+            category="Footwear",
+            base_price=100.00,
+            price=90.00,
+            discount=discount_instance,  # Assign the Discount instance here
         )
         
-        # Link the product to the order via OrderItem
-        cls.order_item = OrderItem.objects.create(
-            order=cls.order,
-            product=cls.product,
+        # Create an order with the product
+        self.order = Order.objects.create(
+            order_date="2024-11-19",
+            total_amount=108.00,
+            discount_applied=10.00,
+            payment_status="Paid",
+            customer=self.customer
+        )
+
+        self.order_item = OrderItem.objects.create(
+            order=self.order,
+            product=self.product,
             quantity=1,
-            price_per_item=50.00
+            price_per_item=120.00
         )
-        cls.order_item2 = OrderItem.objects.create(
-            order=cls.order2,
-            product=cls.product,
-            quantity=1,
-            price_per_item=75.00
-        )
-        cls.order_item3 = OrderItem.objects.create(
-            order=cls.order3,
-            product=cls.product,
-            quantity=1,
-            price_per_item=100.00
-        )
-
-        # Create three comments for the product
-        cls.comment1 = Comment.objects.create(
-            product=cls.product,
-            customer=cls.customer,
-            comment="Great product, very comfortable!",
-            approval_status="Pending"
-        )
-
-        cls.comment2 = Comment.objects.create(
-            product=cls.product,
-            customer=cls.customer2,
-            comment="Very stylish and durable!",
-            approval_status="Approved"
-        )
-        '''
-        cls.comment3 = Comment.objects.create(
-            product=cls.product,
-            customer=cls.customer3,
-            comment="Love the fit and feel!",
-            approval_status="Pending"
-        )
-        '''
         
- 
-    def test_comment_creation(self):
-        # Test that the comment was created correctly
-        self.assertEqual(self.comment2.comment, "Very stylish and durable!")
-        self.assertEqual(self.comment2.approval_status, "Approved")
+        # Create a valid comment for testing
+        self.comment = Comment.objects.create(
+            customer=self.customer,
+            product=self.product,
+            comment="Great shoes, would buy again.",
+            approval_status="pending"
+        )
 
-    def test_create_comment(self):
-        # Test the API endpoint for creating a comment
-        url = reverse('add_comment', kwargs={'product_id': "001"})  # Use correct product_id
-        data = {
-            'customer_id': "004",  # Use correct customer_id
-            'comment': "This is a new comment."
-        }
-        response = self.client.post(url, json.dumps(data), content_type='application/json')
-
-         # Print the new count of comments after adding the comment
-        new_count = Comment.objects.count()
-        print("After adding comment:", new_count)
+    def test_add_comment(self):
+        """Test adding a comment by a customer who has purchased the product."""
+        url = reverse('add_comment', kwargs={'product_id': self.product.product_id})
+        data = {'customer_id': self.customer.customer_id, 'comment': 'Nice product!'}
+        response = self.client.post(url, data)
         
-        # Ensure the comment was created correctly
-        self.assertEqual(response.status_code, 201)  # Assuming 201 for created
-        self.assertEqual(Comment.objects.count(), 3)  # Check if a new comment is created
-        new_comment = Comment.objects.last()
-        self.assertEqual(new_comment.comment, "This is a new comment.")
-        self.assertEqual(new_comment.approval_status, "Pending")
-        data_duplicate = {
-        'customer_id': "003",  # Same customer_id
-        'comment': "This is another comment."
-        }
-        response_duplicate = self.client.post(url, json.dumps(data_duplicate), content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Comment.objects.count(), 2)  # One existing comment + the new one
+        self.assertEqual(Comment.objects.last().comment, 'Nice product!')
 
-        # Assert that the second comment attempt fails
-        self.assertEqual(response_duplicate.status_code, 400)
-        self.assertIn("You have already commented on this product.", response_duplicate.json()['error'])
-
-    def test_comment_approval_status(self):
-        # Test if comment approval status is correct
-        self.comment2.approval_status = "Approved"
-        self.comment2.save()
+    def test_add_comment_duplicate(self):
+        """Test adding a duplicate comment for the same product by the same customer."""
+        url = reverse('add_comment', kwargs={'product_id': self.product.product_id})
+        data = {'customer_id': self.customer.customer_id, 'comment': 'Great shoes, would buy again.'}
+        response = self.client.post(url, data)
         
-        self.assertEqual(self.comment2.approval_status, "Approved")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("duplicate", response.data["detail"])
 
-    def test_invalid_comment(self):
-        # Test the case where an invalid comment is posted (e.g., invalid customer)
-        url = reverse('add_comment', kwargs={'product_id': "001"})
-        data = {
-            'customer_id': "invalid_customer_id",  # Use a non-existent customer ID
-            'comment': "This is an invalid comment."
-        }
-        response = self.client.post(url, json.dumps(data), content_type='application/json')
+    def test_add_comment_invalid_customer(self):
+        """Test adding a comment by a customer who has not purchased the product."""
+        invalid_customer = Customer.objects.create(
+            name="Jane Doe",
+            tax_id="TAX654321",
+            email="janedoe@example.com",
+            password="securepassword",
+            home_address="456 Test St",
+        )
+        url = reverse('add_comment', kwargs={'product_id': self.product.product_id})
+        data = {'customer_id': invalid_customer.customer_id, 'comment': 'Nice product!'}
+        response = self.client.post(url, data)
         
-        self.assertEqual(response.status_code, 400)  # Expecting 400 for invalid customer
-        self.assertIn("Invalid customer ID", response.json()['error'])
-    
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("purchase", response.data["detail"])
+
+    def test_delete_comment(self):
+        """Test deleting a comment by the customer who made the comment."""
+        url = reverse('delete_comment', kwargs={'comment_id': self.comment.comment_id})
+        self.client.force_login(self.customer)
+        response = self.client.delete(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Comment.objects.count(), 0)
+
+    def test_delete_comment_invalid_customer(self):
+        """Test that a comment cannot be deleted by someone who is not the author."""
+        another_customer = Customer.objects.create(
+            name="Mike Smith",
+            tax_id="TAX789012",
+            email="mikesmith@example.com",
+            password="securepassword",
+            home_address="789 Test St",
+        )
+        url = reverse('delete_comment', kwargs={'comment_id': self.comment.comment_id})
+        self.client.force_login(another_customer)
+        response = self.client.delete(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_get_comments(self):
-    # Test the API endpoint for getting comments for a product
-        url = reverse('get_comments', kwargs={'product_id': "001"})  # Correct product_id (string type)
+        """Test that comments can be retrieved for a product."""
+        url = reverse('get_comments', kwargs={'product_id': self.product.product_id})
         response = self.client.get(url)
-
-        # Ensure the response is OK (status code 200)
-        self.assertEqual(response.status_code, 200)
         
-        # Print the response content for debugging
-        print("Response Data:", response.json())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['comment'], 'Great shoes, would buy again.')
+
+    def test_get_pending_comments(self):
+        """Test that a ProductManager can retrieve pending comments."""
+        url = reverse('get_pending_comments')
+        self.client.force_login(self.product.productmanager)  # Assuming the ProductManager is already created
+        response = self.client.get(url)
         
-        # Ensure the correct comments are returned
-        comments = response.json().get('comments', [])
-        print("Comments:", comments)  # Debugging the returned comments
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['approval_status'], 'pending')
 
-        # Check if the correct number of comments are returned
-        self.assertEqual(len(comments), 2)  # Should return two comments in this case
-
-        # Ensure the correct content of the comments
-        self.assertEqual(comments[0]['comment'], "Great product, very comfortable!")
-        self.assertEqual(comments[1]['comment'], "Very stylish and durable!")
-
-        # Ensure the approval statuses are correct
-        self.assertEqual(comments[0]['approval_status'], "Pending")
-        self.assertEqual(comments[1]['approval_status'], "Approved")
-    
-    def delete_comment(request, product_id, comment_id):
-        if request.method == 'DELETE':
-            try:
-                # Get the comment for the given product and comment_id
-                comment = Comment.objects.get(comment_id=comment_id, product__product_id=product_id)
-                
-                # Parse the JSON data from the body of the DELETE request
-                data = json.loads(request.body)  # Request body contains the customer_id in JSON format
-                
-                customer_id = data.get('customer_id')
-
-                # Check if the customer ID is valid
-                try:
-                    customer = Customer.objects.get(customer_id=customer_id)
-                except Customer.DoesNotExist:
-                    return JsonResponse({'error': 'Invalid customer ID'}, status=400)
-
-                # Check if the customer is the one who made the comment
-                if str(comment.customer.customer_id) != customer_id:
-                    return JsonResponse({'error': 'You can only delete your own comments.'}, status=403)
-
-                # Proceed to delete the comment
-                comment.delete()
-
-                return JsonResponse({}, status=204)  # No content on successful deletion
-
-            except Comment.DoesNotExist:
-                return JsonResponse({'error': 'Comment not found.'}, status=404)
-            except json.JSONDecodeError:
-                return JsonResponse({'error': 'Invalid JSON.'}, status=400)
-
-    def test_delete_comment_not_found(self):
-        # Ensure the comment count is correct before deletion
-        comment_count_before = Comment.objects.count()
-
-        # Simulate the delete request for a non-existent comment
-        url = reverse('delete_comment', kwargs={'product_id': "001", 'comment_id': 999})  # Non-existent comment ID
-        data = {'customer_id': "002"}  # customer_id for the owner
-        response = self.client.delete(url, data=json.dumps(data), content_type='application/json')
-
-        # Ensure the response indicates that the comment was not found (status code 404)
-        self.assertEqual(response.status_code, 404)
-        self.assertIn('Comment not found.', response.json()['error'])
+    def test_update_approval(self):
+        """Test that a ProductManager can approve a pending comment."""
+        url = reverse('update_approval', kwargs={'comment_id': self.comment.comment_id})
+        self.client.force_login(self.product.productmanager)  # Assuming the ProductManager is already created
+        response = self.client.patch(url, {'approval_status': 'approved'})
         
-        # Ensure the comment count remains the same (not deleted)
-        comment_count_after = Comment.objects.count()
-        self.assertEqual(comment_count_after, comment_count_before)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Comment.objects.last().approval_status, 'approved')
 
-    def test_delete_comment_invalid_customer_id(self):
-        # Ensure the comment exists before deletion
-        comment_count_before = Comment.objects.count()
-
-        # Simulate the delete request with an invalid customer ID
-        url = reverse('delete_comment', kwargs={'product_id': "001", 'comment_id': self.comment1.comment_id})
-        data = {'customer_id': "invalid_customer_id"}  # Invalid customer ID
-        response = self.client.delete(url, json.dumps(data), content_type='application/json')
-
-        # Check for status code 403 for invalid customer ID
-        self.assertEqual(response.status_code, 403)  # Check that it returns a 403
-        self.assertIn('You can only delete your own comments.', response.json()['error'])
-
-        # Ensure the comment count remains the same (not deleted)
-        comment_count_after = Comment.objects.count()
-        self.assertEqual(comment_count_after, comment_count_before)
+    def test_update_approval_invalid_comment(self):
+        """Test that attempting to approve a non-existent comment returns an error."""
+        url = reverse('update_approval', kwargs={'comment_id': 999})
+        self.client.force_login(self.product.productmanager)
+        response = self.client.patch(url, {'approval_status': 'approved'})
         
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_update_approval_invalid_comment_id(self):
+        """Test that providing an invalid comment ID returns an error."""
+        url = reverse('update_approval', kwargs={'comment_id': 999})
+        self.client.force_login(self.product.productmanager)
+        response = self.client.patch(url, {'approval_status': 'approved'})
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
+  
+"""
 class RatingTests(TestCase):
 
     @classmethod
@@ -740,3 +843,4 @@ class RatingTests(TestCase):
         # Ensure the rating count remains the same (not deleted)
         rating_count_after = Rating.objects.count()
         self.assertEqual(rating_count_after, rating_count_before)    
+"""

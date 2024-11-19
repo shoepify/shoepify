@@ -77,30 +77,39 @@ class Product(models.Model):
             self.price = self.base_price * (1 - self.discount.discount_rate)
         else:
             self.price = self.base_price
-
+        
+        # Save the product to ensure it exists in the database
+        super().save(*args, **kwargs)
+        
         # Calculate avg_rating
         self.update_avg_rating()
 
         super().save(*args, **kwargs)
 
+        # Save again to ensure avg_rating is updated in the database
+        super().save(update_fields=['avg_rating'])
+
     def update_avg_rating(self):
-        # Calculate the average rating
-        ratings = Rating.objects.filter(product=self)
+        """
+        Calculate and update the average rating for the product.
+        """
+        ratings = self.rating_set.all()  # Fetch all related ratings
         if ratings.exists():
             avg_rating = ratings.aggregate(models.Avg('rating_value'))['rating_value__avg']
-            self.avg_rating = round(avg_rating, 2)  # Round to 2 decimal places
+            self.avg_rating = round(avg_rating, 2)
         else:
             self.avg_rating = 0.0
 
-
     def update_popularity_score(self):
-        # Correct the field name to 'rating_value' based on the error message
-        order_items_count = self.orderitem_set.count()  # Count related OrderItems
-        ratings_count = self.rating_set.count()  # Count related Ratings
-        average_rating = self.rating_set.aggregate(models.Avg('rating_value'))['rating_value__avg'] or 0
-        # Example formula for calculating popularity score
-        self.popularity_score = (order_items_count * 0.5) + (ratings_count * average_rating * 0.5)
-        self.save()
+            """
+            Calculate and update the popularity score for the product.
+            Example formula combines ratings, orders, and wishlist additions.
+            """
+            order_items_count = self.orderitem_set.count()
+            ratings_count = self.rating_set.count()
+            average_rating = self.rating_set.aggregate(models.Avg('rating_value'))['rating_value__avg'] or 0
+            wishlist_count = self.wishlistitem_set.count()
+            self.popularity_score = (order_items_count * 0.4) + (ratings_count * average_rating * 0.4) + (wishlist_count * 0.2)
 
     def get_sales_volume(self):
         return OrderItem.objects.filter(product=self).count()

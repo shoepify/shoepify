@@ -1,7 +1,9 @@
 # comment_views.py
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from shoesite.models import  Comment, Product, Customer, OrderItem
+from shoesite.models import  Comment, Product, Customer, OrderItem, ProductManager
 import json
 from django.db.models import Q  # Add this to enable complex query filtering
 
@@ -42,6 +44,7 @@ def add_comment(request, product_id):
         return JsonResponse({"message": "Your comment is waiting for approval.", "comment_id": comment.comment_id}, status=201)
     
     return JsonResponse({"error": "Invalid request."}, status=400)
+
 
 def get_comments(request, product_id):
     if request.method == 'GET':
@@ -86,3 +89,42 @@ def delete_comment(request, product_id, comment_id):
             return JsonResponse({'error': 'Comment not found.'}, status=404)
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+        
+def get_pending_comments(request):
+    if request.user.is_authenticated and isinstance(request.user, ProductManager):
+        # Fetch pending comments from the database
+        comments = Comment.objects.filter(approval_status='Pending')
+        comments_data = [
+            {
+                "comment_id": comment.id,
+                "customer_name": comment.customer.name,
+                "comment": comment.comment,
+            }
+            for comment in comments
+        ]
+        return JsonResponse({"comments": comments_data}, status=200)
+    else:
+        return JsonResponse({"error": "Unauthorized access."}, status=403)
+
+def update_approval(request, comment_id):
+    # Check if the user is authenticated and is a ProductManager
+    if request.user.is_authenticated and isinstance(request.user, ProductManager):
+        try:
+            # Ensure the comment_id is an integer
+            comment_id = int(comment_id)
+
+            # Fetch the comment to be approved
+            comment = get_object_or_404(Comment, id=comment_id)
+            
+            # Check the current approval status
+            if comment.approval_status == 'Pending':
+                # Approve the comment
+                comment.approval_status = 'Approved'
+                comment.save()
+                return JsonResponse({"message": "Comment approved successfully."}, status=200)
+            else:
+                return JsonResponse({"error": "Comment is already approved or rejected."}, status=400)
+        except ValueError:
+            return JsonResponse({"error": "Invalid comment_id, must be an integer."}, status=400)
+    else:
+        return JsonResponse({"error": "Unauthorized access."}, status=403)

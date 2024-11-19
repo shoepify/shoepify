@@ -38,6 +38,10 @@ def add_to_cart(request, user_id, product_id):
 
     product = get_object_or_404(Product, product_id=product_id)
 
+    # Ensure the product is saved before referencing in CartItem
+    if product.pk is None:
+        product.save()
+
     # Get or create a cart item for the product
     cart_item, item_created = CartItem.objects.get_or_create(cart=cart, product=product)
 
@@ -63,6 +67,11 @@ def remove_from_cart(request, user_id, product_id):
         cart = get_object_or_404(ShoppingCart, guest=guest)
 
     product = get_object_or_404(Product, product_id=product_id)
+
+    # Ensure the product is saved before referencing in CartItem
+    if product.pk is None:
+        product.save()
+        
     deleted, _ = CartItem.objects.filter(cart=cart, product=product).delete()
 
     if deleted:
