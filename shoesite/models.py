@@ -10,7 +10,7 @@ class Customer(models.Model):
     customer_id = models.AutoField(primary_key=True)  
     name = models.CharField(max_length=100)
     tax_id = models.CharField(max_length=50, unique=True)  # Now a required field
-    email = models.EmailField(max_length=100)
+    email = models.EmailField(max_length=100, unique = True) # now email is supposed to be unique
     password = models.CharField(max_length=100)
     home_address = models.CharField(max_length=255)
 
