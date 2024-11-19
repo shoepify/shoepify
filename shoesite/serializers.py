@@ -52,9 +52,9 @@ class GuestSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['product_id', 'model', 'serial_number', 'stock', 'inventory_to_stock', 
+        fields = ['product_id', 'model', 'serial_number', 'stock', 
                   'warranty_status', 'distributor_info', 'description', 'base_price', 
-                  'price', 'popularity_score', 'category']
+                  'price', 'popularity_score', 'category', 'avg_rating']
 
 
 # Shopping Cart and Cart Item Serializers

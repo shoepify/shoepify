@@ -19,6 +19,7 @@ from rest_framework.exceptions import NotFound
 
 # add item to cart
 @csrf_exempt
+@permission_classes([AllowAny])
 @api_view(['POST'])
 def add_to_cart(request, user_id, product_id):
     """Add product to a user's (customer or guest) shopping cart."""
