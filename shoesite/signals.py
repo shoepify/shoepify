@@ -86,3 +86,32 @@ def update_product_on_wishlistitem_change(sender, instance, created, **kwargs):
 def update_product_on_wishlistitem_delete(sender, instance, **kwargs):
     product = instance.product
     product.update_popularity_score()
+
+
+#it already covers updates to avg_rating and popularity_score for all related events (e.g., changes to OrderItem, Rating, and WishlistItem).
+@receiver(post_save, sender=OrderItem)
+@receiver(post_delete, sender=OrderItem)
+@receiver(post_save, sender=Rating)
+@receiver(post_delete, sender=Rating)
+@receiver(post_save, sender=WishlistItem)
+@receiver(post_delete, sender=WishlistItem)
+def update_product_metrics(sender, instance, **kwargs):
+    """
+    Update popularity_score and avg_rating for the associated product
+    when related objects (OrderItem, Rating, WishlistItem) are added, updated, or deleted.
+    """
+    product = instance.product  # Ensure the related Product is fetched
+    product.update_popularity_score()
+    product.update_avg_rating()
+    product.save()
+
+
+@receiver(post_save, sender=Discount)
+@receiver(post_delete, sender=Discount)
+def update_product_prices(sender, instance, **kwargs):
+    """
+    Update the price of all products related to a Discount when it is created, updated, or deleted.
+    """
+    products = Product.objects.filter(discount=instance)
+    for product in products:
+        product.save()  # Trigger price calculation in Product's save method

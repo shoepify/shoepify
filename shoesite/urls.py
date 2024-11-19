@@ -8,7 +8,7 @@ from shoesite.views.cart_views import add_to_cart, remove_from_cart, get_cart
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
-from shoesite.views.comment_views import add_comment, get_comments, delete_comment
+from shoesite.views.comment_views import add_comment, get_comments, delete_comment, get_pending_comments, update_approval
 from shoesite.views.auth_views import login, signup, get_tokens_for_user, test_token
 from shoesite.views.customer_views import signup_customer, login_customer
 from shoesite.views.pm_views import signup_product_manager, login_product_manager
@@ -93,6 +93,8 @@ urlpatterns = [
     path('products/<int:product_id>/add_comment/', add_comment, name='add_comment'),
     path('products/<int:product_id>/comments/', get_comments, name='get_comments'),
     path('products/<int:product_id>/delete_comment/<int:comment_id>/', delete_comment, name='delete_comment'),
+    path('pending_comments/', get_pending_comments, name='get_pending_comments'),
+    path('update_approval/<int:comment_id>/', update_approval, name='update_approval'),
 
     # For adding ratings
     path('products/<int:product_id>/add_rating/', add_rating, name='add_rating'),
