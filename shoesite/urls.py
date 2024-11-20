@@ -75,7 +75,8 @@ urlpatterns = [
     path('products/search/', search_products, name='search_products'),
 
     # Shopping Cart paths
-    path('cart/<int:customer_id>/add/<int:product_id>/', add_to_cart, name='add_to_cart'),
+    #path('cart/<int:customer_id>/add/<int:product_id>/', add_to_cart, name='add_to_cart'),
+    path('add_to_cart/<int:user_id>/<int:product_id>/<int:quantity>/', add_to_cart, name='add_to_cart'),
     path('cart/<int:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
     path('cart/<int:user_id>/', get_cart, name='get_cart'),
 

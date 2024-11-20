@@ -13,7 +13,18 @@ from shoesite.serializers import CustomerSerializer, GuestSerializer, WishlistSe
 from rest_framework.permissions import AllowAny
 from rest_framework.exceptions import NotFound
 from django.contrib.contenttypes.models import ContentType
-
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes, api_view
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.decorators import authentication_classes
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    refresh['email'] = user.email
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 def merge_cart_items(source_cart, target_cart):
     """
     Merge items from source cart into target cart
@@ -41,37 +52,62 @@ def merge_cart_items(source_cart, target_cart):
         
         # Delete the source item
         source_item.delete()
+
+        
 @csrf_exempt
-@api_view(['POST'])
-def add_to_cart(request, user_id, product_id):
-    """Add product to a user's (customer or guest) shopping cart."""
-    data = JSONParser().parse(request)
-    quantity = data.get('quantity', 1)  # Default quantity is 1 if not provided
-
-    # Check if the user is a customer or guest and fetch accordingly
+def add_to_cart(request, user_id, product_id,quantity):
+    """
+    Add a product to a customer's or guest's shopping cart.
+    
+    """
     try:
-        customer = get_object_or_404(Customer, customer_id=user_id)
-        cart, created = ShoppingCart.objects.get_or_create(customer=customer)
-    except Customer.DoesNotExist:
-        try:
-            guest = get_object_or_404(Guest, guest_id=user_id)
-            cart, created = ShoppingCart.objects.get_or_create(guest=guest)
-        except Guest.DoesNotExist:
-            return JsonResponse({'status': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        # Check if the user is a customer
+        customer = Customer.objects.filter(customer_id=user_id).first()
+        
+        if customer:
+            owner_content_type = ContentType.objects.get_for_model(Customer)
+            owner_object_id = customer.customer_id
+        else:
+            # If not a customer, check if it's a guest
+            guest = Guest.objects.filter(guest_id=user_id).first()
+            if guest:
+                owner_content_type = ContentType.objects.get_for_model(Guest)
+                owner_object_id = guest.guest_id
+            else:
+                return JsonResponse({'error': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
 
-    product = get_object_or_404(Product, product_id=product_id)
+        # Retrieve or create a shopping cart for the owner
+        cart, created = ShoppingCart.objects.get_or_create(
+            owner_content_type=owner_content_type,
+            owner_object_id=owner_object_id
+        )
 
-    # Get or create a cart item for the product
-    cart_item, item_created = CartItem.objects.get_or_create(cart=cart, product=product)
+        # Get the product to add
+        product = get_object_or_404(Product, product_id=product_id)
 
-    if item_created:
-        cart_item.quantity = quantity
-    else:
-        cart_item.quantity += quantity
+        # Check if the product already exists in the cart
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+        if not created:
+            # If the product exists, increment the quantity
+            if quantity<product.stock:
+                cart_item.quantity += quantity
+                cart_item.save()
+            else:
+                return JsonResponse({'error': 'Not enough in stock'}, status=status.HTTP_404_NOT_FOUND)
+               
 
-    cart_item.save()
+        return JsonResponse({
+            'status': 'Product added to cart',
+            'cart_item_id': cart_item.cart_item_id,
+            'quantity': cart_item.quantity
+        }, status=status.HTTP_200_OK)
 
-    return JsonResponse({'status': 'Product added to cart'}, status=status.HTTP_201_CREATED)
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # remove item from cart
 @csrf_exempt

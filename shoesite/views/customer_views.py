@@ -46,7 +46,7 @@ def signup_customer(request):
 
             # Generate tokens after successfully saving the user
             tokens = get_tokens_for_user(customer)
-
+            
             return Response({
                 'message': 'Customer created successfully',
                 'customer_id': customer.id,
@@ -111,7 +111,7 @@ def login_customer(request):
                 guest_cart.delete()
             else:
                 # If this is a new customer cart, just update the ownership of guest cart
-                print("new")
+                
                 guest_cart.owner_content_type = customer_content_type
                 guest_cart.owner_object_id = user.pk
                 guest_cart.save()
