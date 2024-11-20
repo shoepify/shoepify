@@ -1,7 +1,7 @@
 # views.py
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
-from shoesite.models import Customer, Guest, ShoppingCart, CartItem, Product  # 
+from shoesite.models import Customer, Guest, ShoppingCart, CartItem, Product, Order, OrderItem  # 
 import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -106,3 +106,63 @@ def get_cart(request, user_id):
         return Response(cart_serializer.data, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'Cart not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+
+
+
+# Place order
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def place_order(request, user_id):
+    """Place an order for the items in the user's shopping cart."""
+    try:
+        # Check if user is a customer or guest
+        try:
+            customer = get_object_or_404(Customer, customer_id=user_id)
+            cart = get_object_or_404(ShoppingCart, customer=customer)
+        except Customer.DoesNotExist:
+            guest = get_object_or_404(Guest, guest_id=user_id)
+            cart = get_object_or_404(ShoppingCart, guest=guest)
+
+        cart_items = CartItem.objects.filter(cart=cart)
+
+        if not cart_items.exists():
+            return JsonResponse({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create an order and add items to it
+        order = Order.objects.create(
+            customer=customer if 'customer' in locals() else None,
+            order_date=timezone.now(),
+            total_amount=0,  # Will calculate after adding items
+            discount_applied=0,
+            payment_status="Pending"
+        )
+
+        total_amount = 0
+        order_items = []
+
+        for item in cart_items:
+            if item.product.stock < item.quantity:
+                return JsonResponse({"error": f"Insufficient stock for {item.product.model}"}, status=400)
+
+            # Decrease stock
+            item.product.stock -= item.quantity
+            item.product.save()
+
+            # Add to order
+            total_amount += item.quantity * item.product.price
+            order_items.append(OrderItem(order=order, product=item.product, quantity=item.quantity, price_per_item=item.product.price))
+
+        # Save order items and update the total amount
+        OrderItem.objects.bulk_create(order_items)
+        order.total_amount = total_amount
+        order.save()
+
+        # Clear the cart
+        cart_items.delete()
+
+        return JsonResponse({"message": "Order placed successfully.", "order_id": order.order_id}, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

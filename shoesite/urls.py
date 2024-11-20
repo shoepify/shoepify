@@ -4,7 +4,7 @@
 from django.urls import path, include, re_path
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
-from shoesite.views.cart_views import add_to_cart, remove_from_cart, get_cart
+from shoesite.views.cart_views import add_to_cart, remove_from_cart, get_cart, place_order
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
@@ -13,6 +13,7 @@ from shoesite.views.auth_views import login, signup, get_tokens_for_user, test_t
 from shoesite.views.customer_views import signup_customer, login_customer
 from shoesite.views.pm_views import signup_product_manager, login_product_manager
 from shoesite.views.sm_views import signup_sales_manager, login_sales_manager
+from shoesite.views.invoice_views import generate_pdf, create_and_send_invoice, send_invoice_email
 #from shoesite.views import login, signup
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
@@ -100,4 +101,10 @@ urlpatterns = [
     path('products/<int:product_id>/add_rating/', add_rating, name='add_rating'),
     path('products/<int:product_id>/ratings/', get_ratings, name='get_ratings'),
     path('products/<int:product_id>/ratings/<int:rating_id>/delete/', delete_rating, name='delete_rating'),
+
+    # Order and Invoice Paths
+    path('order/<int:user_id>/place/', place_order, name='place_order'),
+    path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
+
+
 ]

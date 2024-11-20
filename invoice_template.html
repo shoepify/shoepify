@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .invoice-table th, .invoice-table td {
+            border: 1px solid #000; /* Solid black borders for compatibility */
+            padding: 8px;
+        }
+        .invoice-table th {
+            text-align: left;
+            background-color: #f2f2f2;
+        }
+        .total {
+            font-weight: bold;
+            text-align: right;
+            margin-top: 10px;
+        }
+        @media print {
+            body {
+                font-size: 12px;
+            }
+            .invoice-header {
+                margin-bottom: 10px;
+            }
+            .total {
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% if order %}
+    <div class="invoice-header">
+        <h1>Invoice</h1>
+        <p><strong>Order ID:</strong> {{ order.id }}</p>
+        <p><strong>Date:</strong> {{ order.order_date }}</p>
+    </div>
+    <table class="invoice-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.orderitem_set.all %}
+            <tr>
+                <td>{{ item.product.model }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.price_per_item|floatformat:2 }}</td>
+                <td>${{ item.quantity|floatformat:2|mul:item.price_per_item|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p class="total"><strong>Total Amount:</strong> ${{ order.total_amount|floatformat:2 }}</p>
+    {% else %}
+    <p>No order details available.</p>
+    {% endif %}
+</body>
+</html>
