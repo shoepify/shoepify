@@ -4,7 +4,7 @@
 from django.urls import path, include, re_path
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
-from shoesite.views.cart_views import add_to_cart, remove_from_cart, get_cart, place_order, order_status
+from shoesite.views.cart_views import add_to_cart, remove_from_cart, get_cart#, place_order, order_status
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
@@ -82,8 +82,8 @@ urlpatterns = [
     path('cart/<int:customer_id>/', get_cart, name='get_cart'),
 
     # Order-related paths
-    path('order/<int:customer_id>/place/', place_order, name='place_order'),
-    path('order/<int:order_id>/status/', order_status, name='order_status'),
+    #path('order/<int:customer_id>/place/', place_order, name='place_order'),
+    #path('order/<int:order_id>/status/', order_status, name='order_status'),
    
 
     # Wishlist paths

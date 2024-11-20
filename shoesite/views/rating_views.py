@@ -43,8 +43,8 @@ def add_rating(request, product_id):
             customer_id=customer_id,
             rating_value=rating_value
         )
-        
-        return JsonResponse({"message": "Your rating has been submitted.", "rating_id": rating.rating_id}, status=201)
+        # returns rating id and value
+        return JsonResponse({"message": "Your rating has been submitted.", "rating_id": rating.rating_id, "rating_value": rating.rating_value}, status=201)
     
     return JsonResponse({"error": "Invalid request."}, status=400)
 
@@ -52,7 +52,7 @@ def get_ratings(request, product_id):
     if request.method == 'GET':
         # Retrieve all ratings for the product
         ratings = Rating.objects.filter(product_id=product_id)
-        ratings_data = [
+        ratings_data = [   
             {
                 "rating_value": rating.rating_value,
                 "customer_id": rating.customer.customer_id,
