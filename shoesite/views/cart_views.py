@@ -78,7 +78,7 @@ def remove_from_cart(request, user_id, product_id):
     if deleted:
         return HttpResponse(status=status.HTTP_204_NO_CONTENT)
     return JsonResponse({'status': 'Product not found in cart'}, status=status.HTTP_404_NOT_FOUND)
-
+#command for merge
 # retrieve the cart
 @api_view(['GET'])
 @permission_classes([AllowAny])
