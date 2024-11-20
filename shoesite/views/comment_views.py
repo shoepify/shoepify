@@ -42,7 +42,8 @@ def add_comment(request, product_id):
             approval_status='Pending'  # Waiting for admin approval
         )
         
-        return JsonResponse({"message": "Your comment is waiting for approval.", "comment_id": comment.comment_id}, status=201)
+        # returns comment id and comment itself
+        return JsonResponse({"message": "Your comment is waiting for approval.", "comment_id": comment.comment_id, "comment": comment.comment}, status=201)
     
     return JsonResponse({"error": "Invalid request."}, status=400)
 
