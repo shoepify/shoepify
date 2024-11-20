@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .invoice-table th, .invoice-table td {
+            border: 1px solid #000; /* Use solid black borders for compatibility */
+            padding: 8px;
+        }
+        .invoice-table th {
+            text-align: left;
+            background-color: #f2f2f2;
+        }
+        .total {
+            font-weight: bold;
+            text-align: right;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-header">
+        <h1>Invoice</h1>
+        <p>Order ID: {{ order.id }}</p>
+        <p>Date: {{ order.order_date }}</p>
+    </div>
+    <table class="invoice-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.orderitem_set.all %}
+            <tr>
+                <td>{{ item.product.model }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.price_per_item }}</td>
+                <td>${{ item.quantity|floatformat:2|add:item.price_per_item }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p class="total">Total Amount: ${{ order.total_amount }}</p>
+</body>
+</html>
