@@ -60,7 +60,7 @@ urlpatterns = [
     path('signup/product_manager/', signup_product_manager, name='signup_product_manager'),
 
     # customer paths
-    path('customer/<str:customer_id>/', get_customer, name='get_customer'),
+    path('customer/<int:customer_id>/', get_customer, name='get_customer'),
     path('customer/create/', create_customer, name='create_customer'),
 
     # sign up / login
@@ -77,19 +77,19 @@ urlpatterns = [
     path('products/search/', search_products, name='search_products'),
 
     # Cart-related paths
-    path('cart/<str:customer_id>/add/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
-    path('cart/<str:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
-    path('cart/<str:customer_id>/', get_cart, name='get_cart'),
+    path('cart/<int:customer_id>/add/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/<int:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
+    path('cart/<int:customer_id>/', get_cart, name='get_cart'),
 
     # Order-related paths
-    path('order/<str:customer_id>/place/', place_order, name='place_order'),
+    path('order/<int:customer_id>/place/', place_order, name='place_order'),
     path('order/<int:order_id>/status/', order_status, name='order_status'),
    
 
     # Wishlist paths
-    path('wishlist/<str:customer_id>/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),
-    path('wishlist/<str:customer_id>/remove/<int:product_id>/', remove_from_wishlist, name='remove_from_wishlist'),
-    path('wishlist/<str:customer_id>/', get_wishlist, name='get_wishlist'),
+    path('wishlist/<int:customer_id>/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),
+    path('wishlist/<int:customer_id>/remove/<int:product_id>/', remove_from_wishlist, name='remove_from_wishlist'),
+    path('wishlist/<int:customer_id>/', get_wishlist, name='get_wishlist'),
 
     # Refund paths
     path('refund/request/<int:order_item_id>/', request_refund, name='request_refund'),
