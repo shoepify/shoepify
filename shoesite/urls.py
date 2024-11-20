@@ -4,7 +4,7 @@
 from django.urls import path, include, re_path
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
-from shoesite.views.cart_views import add_to_cart, remove_from_cart, get_cart
+from shoesite.views.cart_views import add_to_cart, remove_from_cart, get_cart, place_order, order_status
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
@@ -13,6 +13,7 @@ from shoesite.views.auth_views import login, signup, get_tokens_for_user, test_t
 from shoesite.views.customer_views import signup_customer, login_customer
 from shoesite.views.pm_views import signup_product_manager, login_product_manager
 from shoesite.views.sm_views import signup_sales_manager, login_sales_manager
+from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice
 #from shoesite.views import login, signup
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
@@ -59,7 +60,7 @@ urlpatterns = [
     path('signup/product_manager/', signup_product_manager, name='signup_product_manager'),
 
     # customer paths
-    path('customer/<int:customer_id>/', get_customer, name='get_customer'),
+    path('customer/<str:customer_id>/', get_customer, name='get_customer'),
     path('customer/create/', create_customer, name='create_customer'),
 
     # sign up / login
@@ -75,15 +76,20 @@ urlpatterns = [
     path('products/<int:product_id>/delete/', delete_product, name='delete_product'),
     path('products/search/', search_products, name='search_products'),
 
-    # Shopping Cart paths
-    path('cart/<int:customer_id>/add/<int:product_id>/', add_to_cart, name='add_to_cart'),
-    path('cart/<int:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
-    path('cart/<int:user_id>/', get_cart, name='get_cart'),
+    # Cart-related paths
+    path('cart/<str:customer_id>/add/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/<str:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
+    path('cart/<str:customer_id>/', get_cart, name='get_cart'),
+
+    # Order-related paths
+    path('order/<str:customer_id>/place/', place_order, name='place_order'),
+    path('order/<int:order_id>/status/', order_status, name='order_status'),
+   
 
     # Wishlist paths
-    path('wishlist/<int:customer_id>/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),
-    path('wishlist/<int:customer_id>/remove/<int:product_id>/', remove_from_wishlist, name='remove_from_wishlist'),
-    path('wishlist/<int:customer_id>/', get_wishlist, name='get_wishlist'),
+    path('wishlist/<str:customer_id>/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),
+    path('wishlist/<str:customer_id>/remove/<int:product_id>/', remove_from_wishlist, name='remove_from_wishlist'),
+    path('wishlist/<str:customer_id>/', get_wishlist, name='get_wishlist'),
 
     # Refund paths
     path('refund/request/<int:order_item_id>/', request_refund, name='request_refund'),
@@ -98,4 +104,10 @@ urlpatterns = [
     path('products/<int:product_id>/add_rating/', add_rating, name='add_rating'),
     path('products/<int:product_id>/ratings/', get_ratings, name='get_ratings'),
     path('products/<int:product_id>/ratings/<int:rating_id>/delete/', delete_rating, name='delete_rating'),
+
+    #invoice mail
+    path('invoice/<int:invoice_id>/view/', view_invoice, name='view_invoice'),
+    path('invoice/<int:invoice_id>/email/', send_invoice_email, name='send_invoice_email'),
+    path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
+
 ]
