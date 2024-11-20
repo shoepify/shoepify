@@ -3,19 +3,21 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from shoesite.models import Customer  # Update to absolute import
+from shoesite.models import Customer,Guest,ShoppingCart  # Update to absolute import
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.hashers import make_password, check_password
-from shoesite.serializers import CustomerSerializer, WishlistSerializer, RefundSerializer, WishlistItemSerializer, ShoppingCartSerializer, CartItemSerializer, ProductSerializer
+from shoesite.serializers import CustomerSerializer, WishlistSerializer, RefundSerializer, WishlistItemSerializer, ShoppingCartSerializer, CartItemSerializer, ProductSerializer, GuestSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import permission_classes, authentication_classes
 import logging
+from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import render
 logger = logging.getLogger(__name__)
-
-
+from django.test import TestCase, Client
+from shoesite.views.cart_views import merge_cart_items
 # CUSTOMER
 
 # generate tokens
@@ -54,6 +56,9 @@ def signup_customer(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # login
+
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @authentication_classes([]) 
@@ -76,8 +81,49 @@ def login_customer(request):
     if password != user.password:
         # if wrong return error
         return Response({'error': 'Invalid password'}, status=status.HTTP_401_UNAUTHORIZED)
-
     # if all good, return tokens
+    try:
+    # Get guest from session
+        guest_id = request.session.get('guest_id')
+        if guest_id:
+            guest = Guest.objects.get(pk=guest_id)
+            
+            # Get content types
+            guest_content_type = ContentType.objects.get_for_model(Guest)
+            customer_content_type = ContentType.objects.get_for_model(Customer)
+            
+            # Get guest's cart
+            guest_cart = ShoppingCart.objects.get(
+                owner_content_type=guest_content_type,
+                owner_object_id=guest.guest_id
+            )
+            
+            # Get or create customer's cart
+            customer_cart, created = ShoppingCart.objects.get_or_create(
+                owner_content_type=customer_content_type,
+                owner_object_id=user.pk
+            )
+            
+            if not created:
+                # If customer has existing cart, merge the items
+                merge_cart_items(guest_cart, customer_cart)
+                # Delete guest's cart after merging
+                guest_cart.delete()
+            else:
+                # If this is a new customer cart, just update the ownership of guest cart
+                print("new")
+                guest_cart.owner_content_type = customer_content_type
+                guest_cart.owner_object_id = user.pk
+                guest_cart.save()
+                # Delete the empty customer cart that was just created
+                customer_cart.delete()
+            
+            # Clean up guest user
+            guest.delete()
+            request.session.pop('guest_id', None)
+    except Exception as e:
+        print(f"Error transferring cart: {str(e)}")
+    
     tokens = get_tokens_for_user(user)
     return Response({
         'tokens': tokens,
@@ -100,3 +146,5 @@ def create_customer(request):
             customer = serializer.save()
             return JsonResponse({'message': 'Customer created successfully', 'customer_id': customer.id}, status=201)
         return JsonResponse(serializer.errors, status=400)
+    
+

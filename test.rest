@@ -1,18 +1,20 @@
-POST http://127.0.0.1:8000/login
+POST http://127.0.0.1:8000/login/customer/
 Content-Type: application/json
 
-{"email":"can@gmail.com","password":"1234"}
+{"email":"can1@gmail.com","password":"1234"}
 
 ###
 
-POST http://127.0.0.1:8000/signup
+POST http://127.0.0.1:8000/signup/customer/
 Content-Type: application/json
 
 {   
-    "email": "can@gmail.com",
-    "password": "1234",
-    "username": "can"
+    "name": "can",
+    "tax_id": "1234678",
     
+    "email": "can1@gmail.com",
+    "password": "1234",
+    "home_address": "canwqkjrdhuwq"
 }
 
 ###
@@ -28,5 +30,3 @@ Content-Type: application/json
 
 GET http://127.0.0.1:8000/test_token
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzMxNTE5NzU2LCJpYXQiOjE3MzE1MTYxNTYsImp0aSI6IjE2MjcyNzdkNjc5YTQ4OGFiYjY2ZmMwMDk0ZWQ1YTMwIiwidXNlcl9pZCI6MjEsImVtYWlsIjoiY2FuQGdtYWlsLmNvbSJ9.5ipKvU9WZ-lwLrd8KQTo8sv3WLD8GIOWZyybgPxNBMI
-
-

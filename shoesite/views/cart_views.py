@@ -12,12 +12,35 @@ from rest_framework.parsers import JSONParser
 from shoesite.serializers import CustomerSerializer, GuestSerializer, WishlistSerializer, RefundSerializer, WishlistItemSerializer, ShoppingCartSerializer, CartItemSerializer, ProductSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework.exceptions import NotFound
+from django.contrib.contenttypes.models import ContentType
 
-
-
-# SHOPPING CART, CART ITEMS
-
-# add item to cart
+def merge_cart_items(source_cart, target_cart):
+    """
+    Merge items from source cart into target cart
+    """
+    # Get all items from source cart
+    source_items = CartItem.objects.filter(cart=source_cart)
+    
+    for source_item in source_items:
+        # Try to find matching item in target cart
+        try:
+            target_item = CartItem.objects.get(
+                cart=target_cart,
+                product=source_item.product
+            )
+            # If found, add quantities
+            target_item.quantity += source_item.quantity
+            target_item.save()
+        except CartItem.DoesNotExist:
+            # If not found, create new item in target cart
+            CartItem.objects.create(
+                cart=target_cart,
+                product=source_item.product,
+                quantity=source_item.quantity
+            )
+        
+        # Delete the source item
+        source_item.delete()
 @csrf_exempt
 @api_view(['POST'])
 def add_to_cart(request, user_id, product_id):

@@ -13,6 +13,7 @@ from shoesite.views.auth_views import login, signup, get_tokens_for_user, test_t
 from shoesite.views.customer_views import signup_customer, login_customer
 from shoesite.views.pm_views import signup_product_manager, login_product_manager
 from shoesite.views.sm_views import signup_sales_manager, login_sales_manager
+from .views.guest_views import home_view
 #from shoesite.views import login, signup
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
@@ -46,18 +47,16 @@ urlpatterns = [
     #re_path('signup',signup),
     #re_path('test_token',test_token),
     #re_path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-
     # login paths for customer, pm, sm
     path('login/customer/', login_customer, name='login_customer'),
     path('login/product_manager/', login_product_manager, name='login_product_manager'),
     path('login/sales_manager/', login_sales_manager, name='login_sales_manager'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-
     # sign up paths for customer, sm, pm
     path('signup/customer/', signup_customer, name='signup_customer'),
     path('signup/sales_manager/', signup_sales_manager, name='signup_sales_manager'),
     path('signup/product_manager/', signup_product_manager, name='signup_product_manager'),
-
+    path('', home_view, name='create_guest'),
     # customer paths
     path('customer/<int:customer_id>/', get_customer, name='get_customer'),
     path('customer/create/', create_customer, name='create_customer'),
