@@ -73,7 +73,7 @@ def delete_product(request, product_id):
         product.delete()
         return JsonResponse({'message': 'Product deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
-
+"""
 #Search Product
 def search_products(request):
     query = request.GET.get('q', '')
@@ -88,3 +88,40 @@ def search_products(request):
     # Serialize the results
     serializer = ProductSerializer(products, many=True)
     return JsonResponse(serializer.data, safe=False, status=200)
+
+    
+"""
+    
+#Search and Sort Products
+def search_products(request):
+    query = request.GET.get('q', '')
+    sort_by = request.GET.get('sort', '')  # Sort field (price or popularity_score)
+    sort_order = request.GET.get('order', 'asc')  # Sort order (asc or desc)
+
+    if not query:
+        return JsonResponse({"error": "Search query parameter 'q' is required"}, status=400)
+
+    # Perform case-insensitive search on 'model' and 'description'
+    products = Product.objects.filter(
+        Q(model__icontains=query) | Q(description__icontains=query)
+    )
+
+    # Handle sorting
+    if sort_by:
+        if sort_by not in ['price', 'popularity_score']:
+            return JsonResponse({"error": f"Invalid sort field '{sort_by}'. Use 'price' or 'popularity_score'."},
+                                status=400)
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+        products = products.order_by(sort_by)
+
+    # Serialize the results with stock information
+    serializer = ProductSerializer(products, many=True)
+    product_data = serializer.data
+
+    # Add a flag indicating whether each product is in stock
+    for product in product_data:
+        product_obj = products.get(product_id=product['product_id'])
+        product['in_stock'] = product_obj.stock > 0
+
+    return JsonResponse(product_data, safe=False, status=200)

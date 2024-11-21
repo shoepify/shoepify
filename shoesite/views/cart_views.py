@@ -39,11 +39,11 @@ def add_to_cart(request, user_id, product_id):
 
     product = get_object_or_404(Product, product_id=product_id)
 
-    # Ensure the product is saved before referencing in CartItem
-    if product.pk is None:
-        product.save()
+    # Check if the product is in stock
+    if product.stock <= 0:
+        return JsonResponse({'status': 'Product is out of stock'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Get or create a cart item for the product
+    # Ensure the product is saved before referencing in CartItem
     cart_item, item_created = CartItem.objects.get_or_create(cart=cart, product=product)
 
     if item_created:
@@ -54,6 +54,7 @@ def add_to_cart(request, user_id, product_id):
     cart_item.save()
 
     return JsonResponse({'status': 'Product added to cart'}, status=status.HTTP_201_CREATED)
+
 
 # remove item from cart
 @csrf_exempt
