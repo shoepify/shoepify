@@ -115,4 +115,4 @@ class RefundSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['comment_id', 'product', 'customer', 'comment', 'approval_status']
+        fields = ['id', 'product', 'customer', 'comment', 'approval_status']

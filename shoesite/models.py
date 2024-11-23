@@ -213,6 +213,7 @@ class Comment(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     comment = models.TextField()
     approval_status = models.CharField(max_length=50)
+    id = property(lambda self: self.comment_id)
 
 
 
