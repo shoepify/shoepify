@@ -50,9 +50,24 @@ def add_comment(request, product_id):
 
 def get_comments(request, product_id):
     if request.method == 'GET':
-        comments = Comment.objects.filter(product_id=product_id)
-        #If we want just the approveed ones use this
-        #comments = Comment.objects.filter(product_id=product_id, approval_status='Approved')
+        # Check if the 'approved' query parameter is passed
+        approved_only = request.GET.get('approved', None)
+
+        # Build the base query
+        comments_query = Comment.objects.filter(product_id=product_id)
+        
+        # If the 'approved' query parameter is set to true, filter by approval_status
+        if approved_only == 'true':
+            comments_query = comments_query.filter(approval_status='Approved')
+
+        # Fetch the comments
+        comments = comments_query
+        
+        # If no comments are found, return a message
+        if not comments.exists():
+            return JsonResponse({"message": "No comments found for this product."}, status=404)
+
+        # Prepare the response data
         comments_data = [
             {
                 "comment_id": comment.comment_id,
@@ -66,7 +81,6 @@ def get_comments(request, product_id):
         return JsonResponse({"comments": comments_data}, status=200)
     
     return JsonResponse({"error": "Invalid request."}, status=400)
-
 @csrf_exempt
 def delete_comment(request, product_id, comment_id):
     if request.method == 'DELETE':
@@ -96,6 +110,20 @@ def delete_comment(request, product_id, comment_id):
             return JsonResponse({'error': 'Invalid customer_id. It should be an integer.'}, status=400)
         
 def get_pending_comments(request):
+
+# Fetch pending comments from the database
+    comments = Comment.objects.filter(approval_status='Pending')
+    comments_data = [
+        {
+            "comment_id": comment.id,
+            "customer_name": comment.customer.name,
+            "comment": comment.comment,
+        }
+        for comment in comments
+    ]
+    return JsonResponse({"comments": comments_data}, status=200)
+
+    """
     if request.user.is_authenticated and isinstance(request.user, ProductManager):
         # Fetch pending comments from the database
         comments = Comment.objects.filter(approval_status='Pending')
@@ -110,9 +138,31 @@ def get_pending_comments(request):
         return JsonResponse({"comments": comments_data}, status=200)
     else:
         return JsonResponse({"error": "Unauthorized access."}, status=403)
+     """
 
+@csrf_exempt
 def update_approval(request, comment_id):
-    # Check if the user is authenticated and is a ProductManager
+    if request.method == 'PUT':  # Only allow PUT method for approval
+        try:
+            # Ensure the comment_id is an integer
+            comment_id = int(comment_id)
+
+            # Fetch the comment to be approved using 'comment_id' instead of 'id'
+            comment = get_object_or_404(Comment, comment_id=comment_id)  # Correct field name here
+
+            # Check the current approval status
+            if comment.approval_status == 'Pending':
+                # Approve the comment
+                comment.approval_status = 'Approved'
+                comment.save()
+                return JsonResponse({"message": "Comment approved successfully."}, status=200)
+            else:
+                return JsonResponse({"error": "Comment is already approved or rejected."}, status=400)
+        except ValueError:
+            return JsonResponse({"error": "Invalid comment_id, must be an integer."}, status=400)
+    
+    return JsonResponse({"error": "Invalid request method. Please use PUT."}, status=405)  # Handle incorrect methods
+    """
     if request.user.is_authenticated and isinstance(request.user, ProductManager):
         try:
             # Ensure the comment_id is an integer
@@ -133,3 +183,4 @@ def update_approval(request, comment_id):
             return JsonResponse({"error": "Invalid comment_id, must be an integer."}, status=400)
     else:
         return JsonResponse({"error": "Unauthorized access."}, status=403)
+    """

@@ -101,6 +101,7 @@ urlpatterns = [
     path('products/<int:product_id>/delete_comment/<int:comment_id>/', delete_comment, name='delete_comment'),
     path('pending_comments/', get_pending_comments, name='get_pending_comments'),
     path('update_approval/<int:comment_id>/', update_approval, name='update_approval'),
+    #http://127.0.0.1:8000/products/10/comments/?approved=true           For approved comments
 
     # For adding ratings
     path('products/<int:product_id>/add_rating/', add_rating, name='add_rating'),
