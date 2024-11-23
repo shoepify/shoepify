@@ -3,6 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from shoesite.models import  Product
 import json
+import re
 from django.shortcuts import render, get_object_or_404, redirect
 from rest_framework import status
 from django.db.models import Q  # Add this to enable complex query filtering
@@ -69,7 +70,7 @@ def delete_product(request, product_id):
         product.delete()
         return JsonResponse({'message': 'Product deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
-
+"""
 #Search Product
 def search_products(request):
     query = request.GET.get('q', '')
@@ -80,6 +81,32 @@ def search_products(request):
     products = Product.objects.filter(
         Q(model__icontains=query) | Q(description__icontains=query)
     )
+
+    # Serialize the results
+    serializer = ProductSerializer(products, many=True)
+    return JsonResponse(serializer.data, safe=False, status=200)
+    """
+
+
+def search_products(request):
+    query = request.GET.get('q', '')
+    if not query:
+        return JsonResponse({"error": "Search query parameter 'q' is required"}, status=400)
+
+    # Split the query by spaces
+    words = query.split()
+
+    # Initialize an empty Q object to build the search query
+    product_filter = Q()
+
+    for word in words:
+        # Use a case-insensitive regex to match words starting with the query
+        product_filter &= (
+            Q(model__iregex=r'\b' + re.escape(word)) | Q(description__iregex=r'\b' + re.escape(word))
+        )
+
+    # Perform the search using the combined filter
+    products = Product.objects.filter(product_filter)
 
     # Serialize the results
     serializer = ProductSerializer(products, many=True)
