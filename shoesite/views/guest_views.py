@@ -9,6 +9,7 @@ def home_view(request):
     Just creates guest user and can redirect to your main page or return guest info
     """
     # Create or get guest user
+    #request.session.flush()
     if not request.session.session_key:
         request.session.create()
     

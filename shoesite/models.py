@@ -17,6 +17,7 @@ class Customer(models.Model):
     # Override the default 'id' to refer to 'customer_id'
     id = property(lambda self: self.customer_id)
 
+    
     def __str__(self):
         return self.name
 
@@ -43,7 +44,7 @@ class Guest(models.Model):
     guest_id = models.AutoField(primary_key=True)
     session_id = models.CharField(max_length=255, unique=True)  # To identify the guest uniquely
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
     def __str__(self):
         return f"Guest {self.guest_id}"
 

@@ -9,8 +9,8 @@ POST http://127.0.0.1:8000/signup/customer/
 Content-Type: application/json
 
 {   
-    "name": "can",
-    "tax_id": "1234678",
+    "name": "can1",
+    "tax_id": "1237922123",
     
     "email": "can1@gmail.com",
     "password": "1234",
