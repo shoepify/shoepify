@@ -3,6 +3,13 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from .models import OrderItem, Rating, WishlistItem, Product, Discount, ShoppingCart, Wishlist, Customer, Guest
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.sessions.models import Session
+
+@receiver(post_save, sender=Session)
+def create_guest_for_session(sender, instance, created, **kwargs):
+    if created:  # Check if a new session is created
+        Guest.objects.create(session_id=instance.session_key)
+        
 
 
 
@@ -26,6 +33,7 @@ def create_shopping_cart_for_guest(sender, instance, created, **kwargs):
             owner_content_type=content_type,
             owner_object_id=instance.pk
         )
+        
 
 
 # WISHLIST
