@@ -34,14 +34,18 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class SalesManagerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SalesManager
-        fields = ['manager_id', 'password', 'name', 'email']
-
-class ProductManagerSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)  # Include 'id' as a read-only field
+    
     class Meta:
         model = ProductManager
-        fields = ['manager_id', 'password', 'name', 'email']
+        fields = ['id', 'manager_id', 'password', 'name', 'email']
+
+class ProductManagerSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)  # Include 'id' as a read-only field
+    
+    class Meta:
+        model = ProductManager
+        fields = ['id', 'manager_id', 'password', 'name', 'email']
 
 class GuestSerializer(serializers.ModelSerializer):
     class Meta:
@@ -52,9 +56,9 @@ class GuestSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['product_id', 'model', 'serial_number', 'stock', 'inventory_to_stock', 
+        fields = ['product_id', 'model', 'serial_number', 'stock', 
                   'warranty_status', 'distributor_info', 'description', 'base_price', 
-                  'price', 'popularity_score', 'category']
+                  'price', 'popularity_score', 'category', 'avg_rating']
 
 
 # Shopping Cart and Cart Item Serializers
@@ -115,4 +119,4 @@ class RefundSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['comment_id', 'product', 'customer', 'comment', 'approval_status']
+        fields = ['id', 'product', 'customer', 'comment', 'approval_status']

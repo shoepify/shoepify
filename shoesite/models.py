@@ -4,13 +4,15 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
+
 
 # Customer Model
 class Customer(models.Model):
     customer_id = models.AutoField(primary_key=True)  
     name = models.CharField(max_length=100)
     tax_id = models.CharField(max_length=50, unique=True)  # Now a required field
-    email = models.EmailField(max_length=100)
+    email = models.EmailField(max_length=100, unique = True) # now email is supposed to be unique
     password = models.CharField(max_length=100)
     home_address = models.CharField(max_length=255)
 
@@ -29,6 +31,10 @@ class SalesManager(models.Model):
     email = models.EmailField(max_length=100)
     #phone_number = models.CharField(max_length=15)
     password = models.CharField(max_length=100)
+    id = property(lambda self: self.manager_id)
+
+    def __str__(self):
+        return self.name
     
 
 # ProductManager Model
@@ -38,6 +44,10 @@ class ProductManager(models.Model):
     email = models.EmailField(max_length=100)
     #phone_number = models.CharField(max_length=15)
     password = models.CharField(max_length=100)
+    id = property(lambda self: self.manager_id)
+
+    def __str__(self):
+        return self.name
 
 # Guest User Model
 class Guest(models.Model):
@@ -56,7 +66,7 @@ class Product(models.Model):
     model = models.CharField(max_length=100)
     serial_number = models.CharField(max_length=100)
     stock = models.IntegerField()
-    inventory_to_stock = models.IntegerField()
+    #inventory_to_stock = models.IntegerField()
     warranty_status = models.CharField(max_length=50)
     distributor_info = models.CharField(max_length=100)
 
@@ -78,30 +88,39 @@ class Product(models.Model):
             self.price = self.base_price * (1 - self.discount.discount_rate)
         else:
             self.price = self.base_price
-
+        
+        # Save the product to ensure it exists in the database
+        super().save(*args, **kwargs)
+        
         # Calculate avg_rating
         self.update_avg_rating()
 
-        super().save(*args, **kwargs)
+        #super().save(*args, **kwargs)
+
+        # Save again to ensure avg_rating is updated in the database
+        super().save(update_fields=['avg_rating'])
 
     def update_avg_rating(self):
-        # Calculate the average rating
-        ratings = Rating.objects.filter(product=self)
+        """
+        Calculate and update the average rating for the product.
+        """
+        ratings = self.rating_set.all()  # Fetch all related ratings
         if ratings.exists():
             avg_rating = ratings.aggregate(models.Avg('rating_value'))['rating_value__avg']
-            self.avg_rating = round(avg_rating, 2)  # Round to 2 decimal places
+            self.avg_rating = round(avg_rating, 2)
         else:
             self.avg_rating = 0.0
 
-
     def update_popularity_score(self):
-        # Correct the field name to 'rating_value' based on the error message
-        order_items_count = self.orderitem_set.count()  # Count related OrderItems
-        ratings_count = self.rating_set.count()  # Count related Ratings
-        average_rating = self.rating_set.aggregate(models.Avg('rating_value'))['rating_value__avg'] or 0
-        # Example formula for calculating popularity score
-        self.popularity_score = (order_items_count * 0.5) + (ratings_count * average_rating * 0.5)
-        self.save()
+            """
+            Calculate and update the popularity score for the product.
+            Example formula combines ratings, orders, and wishlist additions.
+            """
+            order_items_count = self.orderitem_set.count()
+            ratings_count = self.rating_set.count()
+            average_rating = self.rating_set.aggregate(models.Avg('rating_value'))['rating_value__avg'] or 0
+            wishlist_count = self.wishlistitem_set.count()
+            self.popularity_score = (order_items_count * 0.4) + (ratings_count * average_rating * 0.4) + (wishlist_count * 0.2)
 
     def get_sales_volume(self):
         return OrderItem.objects.filter(product=self).count()
@@ -132,6 +151,10 @@ class Order(models.Model):
     discount_applied = models.DecimalField(max_digits=10, decimal_places=2)
     payment_status = models.CharField(max_length=50)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=[('Processing', 'Processing'), ('In-Transit', 'In-Transit'), ('Delivered', 'Delivered')])
+    #created_at = models.DateTimeField(auto_now_add=True)
+
+    
 
 class OrderItem(models.Model):
     order_item_id = models.AutoField(primary_key=True)
@@ -139,6 +162,7 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
     price_per_item = models.DecimalField(max_digits=10, decimal_places=2)
+
 
 # ShoppingCart Model
 class ShoppingCart(models.Model):
@@ -197,6 +221,7 @@ class Comment(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     comment = models.TextField()
     approval_status = models.CharField(max_length=50)
+    id = property(lambda self: self.comment_id)
 
 
 
@@ -224,3 +249,10 @@ class Refund(models.Model): # new table for refund
     def __str__(self):
         return f"Refund {self.refund_id} for Order Item {self.order_item.order_item_id}"
 
+
+class Invoice(models.Model):
+    order = models.OneToOneField("Order", on_delete=models.CASCADE, related_name="invoice")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Invoice for Order #{self.order.id}"

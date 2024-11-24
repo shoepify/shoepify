@@ -34,6 +34,7 @@ def merge_cart_items(source_cart, target_cart):
     
     for source_item in source_items:
         # Try to find matching item in target cart
+
         try:
             target_item = CartItem.objects.get(
                 cart=target_cart,
@@ -171,12 +172,17 @@ def remove_from_cart(request, user_id, product_id):
         cart = get_object_or_404(ShoppingCart, guest=guest)
 
     product = get_object_or_404(Product, product_id=product_id)
+
+    # Ensure the product is saved before referencing in CartItem
+    if product.pk is None:
+        product.save()
+        
     deleted, _ = CartItem.objects.filter(cart=cart, product=product).delete()
 
     if deleted:
         return HttpResponse(status=status.HTTP_204_NO_CONTENT)
     return JsonResponse({'status': 'Product not found in cart'}, status=status.HTTP_404_NOT_FOUND)
-
+#command for merge
 # retrieve the cart
 @api_view(['GET'])
 @permission_classes([AllowAny])
