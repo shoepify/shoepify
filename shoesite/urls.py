@@ -4,9 +4,10 @@
 from django.urls import path, include, re_path
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
-from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, remove_from_cart, get_cart_customer, get_cart_guest #, place_order, order_status
+from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, remove_from_cart, get_cart_customer, get_cart_guest, place_order, complete_delivery #, order_status
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund
+from shoesite.views.confirm_payment import confirm_payment
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
 from shoesite.views.comment_views import add_comment, get_comments, delete_comment, get_pending_comments, update_approval
 from shoesite.views.auth_views import login, signup, get_tokens_for_user, test_token
@@ -82,6 +83,11 @@ urlpatterns = [
     path('cart/<int:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
     path('cart_customer/<int:user_id>/', get_cart_customer, name='get_cart'),
     path('cart_guest/<int:user_id>/', get_cart_guest, name='get_cart'),
+
+    path('order/place/<int:user_id>/', place_order, name='place_order'),
+    path('delivery/complete/<int:order_id>/', complete_delivery, name='complete_delivery'),
+    path('payment/confirm/<int:order_id>/', confirm_payment, name='confirm_payment'),
+    path('invoice/create/<int:order_id>/', create_and_send_invoice, name='create_and_send_invoice'),
     
     # Order-related paths
     #path('order/<int:customer_id>/place/', place_order, name='place_order'),
