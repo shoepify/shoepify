@@ -34,6 +34,7 @@ def merge_cart_items(source_cart, target_cart):
     
     for source_item in source_items:
         # Try to find matching item in target cart
+
         try:
             target_item = CartItem.objects.get(
                 cart=target_cart,
