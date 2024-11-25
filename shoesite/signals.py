@@ -55,13 +55,13 @@ def update_product_on_orderitem_delete(sender, instance, **kwargs):
     product.update_popularity_score()
 
 # RATING
-
+"""
 # update product's avg rating with every new rating
 @receiver(post_save, sender=Rating)
 def update_product_avg_rating_on_save(sender, instance, **kwargs):
-    """
-    Update the avg_rating field in Product model when a Rating is added or updated.
-    """
+   
+    #Update the avg_rating field in Product model when a Rating is added or updated.
+    
     product = instance.product
     product.update_avg_rating()
     product.save()
@@ -71,7 +71,7 @@ def update_product_avg_rating_on_save(sender, instance, **kwargs):
 def update_product_on_rating_change(sender, instance, created, **kwargs):
     product = instance.product  # Assuming you have a foreign key to Product
     product.update_popularity_score()
-
+"""
 @receiver(post_delete, sender=Rating)
 def update_product_on_rating_delete(sender, instance, **kwargs):
     product = instance.product
