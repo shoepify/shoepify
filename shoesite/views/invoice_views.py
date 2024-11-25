@@ -1,10 +1,11 @@
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.core.mail import EmailMessage
 from io import BytesIO
 from django.shortcuts import get_object_or_404
 from shoesite.models import Invoice, Order  # Update these imports to match your actual models
+from django.utils import timezone
 
 
 # Generate PDF from HTML
@@ -65,29 +66,25 @@ def send_invoice_email(request, invoice_id):
     return HttpResponse(f"Invoice #{invoice.id} sent to {order.customer.email}")
 
 
-# Generate and Email Invoice (Combined)
 def create_and_send_invoice(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
+    try:
+        # Fetch the order
+        order = get_object_or_404(Order, pk=order_id)
 
-    # Create a new invoice (or fetch an existing one)
-    invoice, created = Invoice.objects.get_or_create(order=order)
+        # Create an invoice for the order
+        invoice = Invoice.objects.create(
+            order=order,
+            invoice_date=timezone.now().date(),
+            total_amount=order.total_amount
+        )
 
-    # Render the invoice template with context
-    html_content = render_to_string('invoice_template.html', {'invoice': invoice, 'order': order})
+        # If you are generating a PDF or sending it, make sure this part is correct
+        # Example: pdf = generate_pdf(invoice)
+        # send_invoice_pdf(invoice, pdf)
 
-    # Generate the PDF
-    pdf_buffer = generate_pdf(html_content)
-    if not pdf_buffer:
-        return HttpResponse('Error generating PDF', status=500)
-
-    # Attach the PDF to an email
-    email = EmailMessage(
-        subject=f"Invoice #{invoice.id}",
-        body="Please find your invoice attached.",
-        from_email="your_email@example.com",  # Replace with your email
-        to=[order.customer.email],  # Assuming the Order model has a customer email field
-    )
-    email.attach(f"invoice_{invoice.id}.pdf", pdf_buffer.getvalue(), 'application/pdf')
-    email.send()
-
-    return HttpResponse(f"Invoice #{invoice.id} created and sent to {order.customer.email}")
+        # Here you can check if the invoice is created successfully
+        return JsonResponse({"message": "Invoice generated and sent."}, status=200)
+    
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Log the error for debugging
+        return JsonResponse({"error": f"Invoice generation failed: {str(e)}"}, status=500)

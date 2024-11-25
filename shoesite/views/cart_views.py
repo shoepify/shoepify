@@ -304,16 +304,17 @@ def place_order(request, user_id):
         OrderItem.objects.bulk_create(order_items)
         order.total_amount = total_amount
 
-                # Confirm Payment
+        # Confirm Payment
         factory = RequestFactory()
         payment_request = factory.post('/confirm_payment/', {'payment_status': 'Success'})
         print(f"Debug: Payment Request Data - {payment_request.POST}")  # Debugging
-        payment_response = confirm_payment(payment_request, order.order_id)
+        payment_response = confirm_payment(payment_request, order.order_id)  # Use order.order_id here
         print("payment confirmed")
         if payment_response.status_code != 200:
+            payment_response.render()  # Ensure the response is rendered
             print(f"Debug: Payment Response - {payment_response.content}")  # Debugging
             return JsonResponse({"error": "Payment failed. Order not completed."}, status=status.HTTP_400_BAD_REQUEST)
-        print("payment tam da bitmedi hata verdi")
+        print("payment bitti")
 
         # Save the order
         order.save()
@@ -322,9 +323,10 @@ def place_order(request, user_id):
         cart_items.delete()
 
         # Create and Send Invoice
-        invoice_request = factory.get(f'/create_invoice/{order.order_id}/')
-        invoice_response = create_and_send_invoice(invoice_request, order.order_id)
+        invoice_request = factory.get(f'/create_invoice/{order.order_id}/')  # Use order.order_id here
         print("invoice created")
+        invoice_response = create_and_send_invoice(request, order.order_id)  # Call the function to generate and send the invoice
+        print("sad")
         if invoice_response.status_code != 200:
             return JsonResponse({"error": "Invoice generation failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         print("invoice hata verdi gönderilemedi")
@@ -337,23 +339,27 @@ def place_order(request, user_id):
         if complete_delivery_response.status_code != 200:
             return JsonResponse({"error": "Delivery process failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         print("delivery process yazdırılamadı hata var")
+        
         return JsonResponse({
             "message": "Order placed successfully. Invoice generated and sent. Delivery initiated.",
-            "order_id": order.order_id
+            "order_id": order.order_id  # Return the correct order ID
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-
+@csrf_exempt
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def complete_delivery(request, order_id):
     try:
+        print(f"Debug: Starting delivery process for order {order_id}")
         order = get_object_or_404(Order, pk=order_id)
+        print(f"Debug: Order found - {order}")
         order.status = "Delivered"
         order.save()
+        print(f"Debug: Order {order_id} status updated to 'Delivered'")
         return JsonResponse({"message": "Order marked as delivered."}, status=200)
     except Exception as e:
+        print(f"Error: {e}")
         return JsonResponse({"error": str(e)}, status=500)
-

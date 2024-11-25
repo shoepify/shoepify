@@ -156,9 +156,10 @@ class Order(models.Model):
                             ('Delivered', 'Delivered')],
                             null=True,  # Allow null values
                             blank=True,  # Allow blank values in forms
-                            default=None  # Set default to None (interpreted as NULL in the database)
+                            default="NULL"  # Set default to None (interpreted as NULL in the database)
                             )
     #created_at = models.DateTimeField(auto_now_add=True)
+    #id = property(lambda self: self.order_id)
 
     
 

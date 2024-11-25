@@ -85,7 +85,8 @@ urlpatterns = [
     path('cart_guest/<int:user_id>/', get_cart_guest, name='get_cart'),
 
     path('order/place/<int:user_id>/', place_order, name='place_order'),
-    path('delivery/complete/<int:order_id>/', complete_delivery, name='complete_delivery'),
+    #path('delivery/complete/<int:order_id>/', complete_delivery, name='complete_delivery'),
+    path('complete_delivery/<int:order_id>/', complete_delivery, name='complete_delivery'),
     path('payment/confirm/<int:order_id>/', confirm_payment, name='confirm_payment'),
     path('invoice/create/<int:order_id>/', create_and_send_invoice, name='create_and_send_invoice'),
     
