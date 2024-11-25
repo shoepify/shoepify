@@ -14,6 +14,10 @@ class UserSerializer(serializers.ModelSerializer):
 
  #new rivar
 
+class GuestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Guest
+        fields = ['id']
 
     
 # User Serializers

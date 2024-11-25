@@ -4,19 +4,22 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
+
 
 # Customer Model
 class Customer(models.Model):
     customer_id = models.AutoField(primary_key=True)  
     name = models.CharField(max_length=100)
     tax_id = models.CharField(max_length=50, unique=True)  # Now a required field
-    email = models.EmailField(max_length=100)
+    email = models.EmailField(max_length=100, unique = True) # now email is supposed to be unique
     password = models.CharField(max_length=100)
     home_address = models.CharField(max_length=255)
 
     # Override the default 'id' to refer to 'customer_id'
     id = property(lambda self: self.customer_id)
 
+    
     def __str__(self):
         return self.name
 
@@ -51,7 +54,7 @@ class Guest(models.Model):
     guest_id = models.AutoField(primary_key=True)
     session_id = models.CharField(max_length=255, unique=True)  # To identify the guest uniquely
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
     def __str__(self):
         return f"Guest {self.guest_id}"
 
@@ -148,6 +151,10 @@ class Order(models.Model):
     discount_applied = models.DecimalField(max_digits=10, decimal_places=2)
     payment_status = models.CharField(max_length=50)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=[('Processing', 'Processing'), ('In-Transit', 'In-Transit'), ('Delivered', 'Delivered')])
+    #created_at = models.DateTimeField(auto_now_add=True)
+
+    
 
 class OrderItem(models.Model):
     order_item_id = models.AutoField(primary_key=True)
@@ -155,6 +162,7 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
     price_per_item = models.DecimalField(max_digits=10, decimal_places=2)
+
 
 # ShoppingCart Model
 class ShoppingCart(models.Model):
@@ -241,3 +249,10 @@ class Refund(models.Model): # new table for refund
     def __str__(self):
         return f"Refund {self.refund_id} for Order Item {self.order_item.order_item_id}"
 
+
+class Invoice(models.Model):
+    order = models.OneToOneField("Order", on_delete=models.CASCADE, related_name="invoice")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Invoice for Order #{self.order.id}"

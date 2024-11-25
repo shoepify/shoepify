@@ -3,6 +3,13 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from .models import OrderItem, Rating, WishlistItem, Product, Discount, ShoppingCart, Wishlist, Customer, Guest
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.sessions.models import Session
+
+@receiver(post_save, sender=Session)
+def create_guest_for_session(sender, instance, created, **kwargs):
+    if created:  # Check if a new session is created
+        Guest.objects.create(session_id=instance.session_key)
+        
 
 
 
@@ -26,6 +33,7 @@ def create_shopping_cart_for_guest(sender, instance, created, **kwargs):
             owner_content_type=content_type,
             owner_object_id=instance.pk
         )
+        
 
 
 # WISHLIST
@@ -91,10 +99,13 @@ def update_product_on_wishlistitem_delete(sender, instance, **kwargs):
 #it already covers updates to avg_rating and popularity_score for all related events (e.g., changes to OrderItem, Rating, and WishlistItem).
 @receiver(post_save, sender=OrderItem)
 @receiver(post_delete, sender=OrderItem)
+
 @receiver(post_save, sender=Rating)
 @receiver(post_delete, sender=Rating)
+
 @receiver(post_save, sender=WishlistItem)
 @receiver(post_delete, sender=WishlistItem)
+
 def update_product_metrics(sender, instance, **kwargs):
     """
     Update popularity_score and avg_rating for the associated product

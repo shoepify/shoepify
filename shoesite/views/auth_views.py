@@ -8,7 +8,7 @@ from django.http import JsonResponse, HttpResponse
 from shoesite.models import Comment, Customer, OrderItem, Refund, Product, Wishlist, WishlistItem, ShoppingCart, CartItem, Rating, SalesManager, ProductManager
 import json
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action, permission_classes

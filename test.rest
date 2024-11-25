@@ -1,7 +1,7 @@
 POST http://127.0.0.1:8000/login/customer/
 Content-Type: application/json
 
-{"email":"can@gmail.com","password":"1234"}
+{"email":"can1@gmail.com","password":"1234"}
 
 ###
 
@@ -9,10 +9,10 @@ POST http://127.0.0.1:8000/signup/customer/
 Content-Type: application/json
 
 {   
-    "name": "can",
-    "tax_id": "1234623763748",
+    "name": "can1",
+    "tax_id": "1237922123",
     
-    "email": "can@gmail.com",
+    "email": "can1@gmail.com",
     "password": "1234",
     "home_address": "canwqkjrdhuwq"
 }
@@ -29,6 +29,7 @@ Content-Type: application/json
 ###
 
 GET http://127.0.0.1:8000/test_token
+
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzMyMTE1NjgzLCJpYXQiOjE3MzIxMTIwODMsImp0aSI6IjYwMTkzZTc0MzBmZjRlZjk5MTQwY2QwZGJmNjhkMjliIiwidXNlcl9pZCI6NCwiZW1haWwiOiJjYW4xQGdtYWlsLmNvbSJ9.Qj0xBDKBNMY1Aac7iNLIll8sYo_ccnqwJk7A3x3MY5c
 
 ###
@@ -38,3 +39,4 @@ POST http://127.0.0.1:8000/products/10/add_comment/
   "customer_id": 2,
   "comment": "This is a great product!"
 }
+

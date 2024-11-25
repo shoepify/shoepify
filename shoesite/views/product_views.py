@@ -40,7 +40,11 @@ def get_product(request, product_id):
     if request.method == 'GET':
         product = get_object_or_404(Product, product_id=product_id)
         serializer = ProductSerializer(product)
-        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        return JsonResponse({
+            **serializer.data,
+            "stock": product.stock  # Include stock information
+        }, status=status.HTTP_200_OK)
+
 
 # Update an existing product
 @csrf_exempt  # Consider removing this if not needed
