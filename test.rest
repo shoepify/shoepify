@@ -1,0 +1,18 @@
+POST http://127.0.0.1:8000/login/customer/
+Content-Type: application/json
+
+{"email":"can@gmail.com","password":"1234"}
+
+###
+
+POST http://127.0.0.1:8000/signup/customer/
+Content-Type: application/json
+
+{   
+    "name": "can@gmail.com",
+    "tax_id": "123345",
+    
+    "email": "can2@gmail.com",
+    "password": "1234",
+    "home_address": "canwqkjrdhuwq"
+}
