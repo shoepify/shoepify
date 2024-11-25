@@ -183,11 +183,7 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.model} (Cart: {self.cart.cart_id})"
 
-class Invoice(models.Model):
-    invoice_id = models.AutoField(primary_key=True)
-    order = models.OneToOneField(Order, on_delete=models.CASCADE)
-    invoice_date = models.DateField()
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
 
 # Delivery Model
 class Delivery(models.Model):
