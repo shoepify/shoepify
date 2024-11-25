@@ -29,4 +29,14 @@ Content-Type: application/json
 ###
 
 GET http://127.0.0.1:8000/test_token
+
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzMyMTE1NjgzLCJpYXQiOjE3MzIxMTIwODMsImp0aSI6IjYwMTkzZTc0MzBmZjRlZjk5MTQwY2QwZGJmNjhkMjliIiwidXNlcl9pZCI6NCwiZW1haWwiOiJjYW4xQGdtYWlsLmNvbSJ9.Qj0xBDKBNMY1Aac7iNLIll8sYo_ccnqwJk7A3x3MY5c
+
+###
+POST http://127.0.0.1:8000/products/10/add_comment/
+
+{
+  "customer_id": 2,
+  "comment": "This is a great product!"
+}
+
