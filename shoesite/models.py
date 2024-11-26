@@ -6,7 +6,14 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
+class EmailPreview(models.Model):
+    subject = models.CharField(max_length=255)
+    recipient = models.EmailField()
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.subject
 # Customer Model
 class Customer(models.Model):
     customer_id = models.AutoField(primary_key=True)  
@@ -156,7 +163,7 @@ class Order(models.Model):
                             ('Delivered', 'Delivered')],
                             null=True,  # Allow null values
                             blank=True,  # Allow blank values in forms
-                            default="NULL"  # Set default to None (interpreted as NULL in the database)
+                            default="Not Paid"  # Set default to None (interpreted as NULL in the database)
                             )
     #created_at = models.DateTimeField(auto_now_add=True)
     #id = property(lambda self: self.order_id)

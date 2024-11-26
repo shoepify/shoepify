@@ -1,8 +1,8 @@
 # views.py
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
-from shoesite.models import Customer, Guest, ShoppingCart, CartItem, Product, Order, OrderItem, Invoice
-from shoesite.views.invoice_views import create_and_send_invoice
+from shoesite.models import Customer, Guest, ShoppingCart, CartItem, Product, Order, OrderItem, Invoice, Delivery
+from shoesite.views.invoice_views import create_and_send_invoice, view_invoice
 from shoesite.views.confirm_payment import confirm_payment # 
 import json
 from django.shortcuts import render, get_object_or_404, redirect
@@ -249,13 +249,18 @@ def get_cart_guest(request, user_id):
 
 from django.test.client import RequestFactory  # Import RequestFactory to simulate requests
 
+
+
+
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def place_order(request, user_id):
-    """Place an order for the items in the user's shopping cart, confirm payment, and handle delivery."""
+def start_order(request, user_id):
+    """
+    Start the order process for the items in the user's shopping cart.
+    """
     try:
-        # Determine if the user is a customer or guest and retrieve their cart
+        # Check if the user is a customer
         try:
             customer = Customer.objects.get(customer_id=user_id)
             customer_content_type = ContentType.objects.get_for_model(Customer)
@@ -263,6 +268,55 @@ def place_order(request, user_id):
                 owner_content_type=customer_content_type,
                 owner_object_id=customer.id
             ).first()
+        except Customer.DoesNotExist:
+            # Specific error handling for non-existent customer
+            return JsonResponse({"error": "Customer does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the user is a guest if not a customer
+        if not cart:
+            try:
+                guest = get_object_or_404(Guest, guest_id=user_id)
+                guest_content_type = ContentType.objects.get_for_model(Guest)
+                cart = ShoppingCart.objects.filter(
+                    owner_content_type=guest_content_type,
+                    owner_object_id=guest.guest_id
+                ).first()
+            except Guest.DoesNotExist:
+                return JsonResponse({"error": "Guest does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not cart:
+            return JsonResponse({"error": "Cart not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        cart_items = CartItem.objects.filter(cart=cart)
+
+        if not cart_items.exists():
+            return JsonResponse({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # If no errors, signal the frontend that the order process can proceed
+        return JsonResponse({"success": True, "message": "Order process can proceed."}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        # Catch any unexpected errors
+        return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])  # Allows unauthenticated access
+def confirm_payment(request, user_id):
+    """
+    Confirm payment, create an order based on the user's cart and cart items,
+    generate an invoice, and initiate delivery.
+    """
+    try:
+        # Determine if the user is a customer or guest
+        try:
+            customer = Customer.objects.get(customer_id=user_id)
+            customer_content_type = ContentType.objects.get_for_model(Customer)
+            cart = ShoppingCart.objects.filter(
+                owner_content_type=customer_content_type,
+                owner_object_id=customer.id
+            ).first()
+
         except Customer.DoesNotExist:
             guest = get_object_or_404(Guest, guest_id=user_id)
             cart = ShoppingCart.objects.filter(owner_object_id=guest.guest_id).first()
@@ -275,16 +329,17 @@ def place_order(request, user_id):
         if not cart_items.exists():
             return JsonResponse({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create an order and add items to it
+        # Create an order
         order = Order.objects.create(
             customer=customer if 'customer' in locals() else None,
             order_date=timezone.now(),
             total_amount=0,  # Will calculate after adding items
             discount_applied=0,
             payment_status="Pending",
-            status="Processing"  # New field to track order status
+            status="Processing"  # Track order status
         )
 
+        # Process cart items and calculate total amount
         total_amount = 0
         order_items = []
 
@@ -296,70 +351,86 @@ def place_order(request, user_id):
             item.product.stock -= item.quantity
             item.product.save()
 
-            # Calculate total and prepare order items
+            # Add order item
             total_amount += item.quantity * item.product.price
-            order_items.append(OrderItem(order=order, product=item.product, quantity=item.quantity, price_per_item=item.product.price))
+            order_items.append(OrderItem(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price_per_item=item.product.price
+            ))
 
-        # Save all order items and update total amount in the order
+        # Save all order items and update the total amount
         OrderItem.objects.bulk_create(order_items)
         order.total_amount = total_amount
-
-        # Confirm Payment
-        factory = RequestFactory()
-        payment_request = factory.post('/confirm_payment/', {'payment_status': 'Success'})
-        print(f"Debug: Payment Request Data - {payment_request.POST}")  # Debugging
-        payment_response = confirm_payment(payment_request, order.order_id)  # Use order.order_id here
-        print("payment confirmed")
-        if payment_response.status_code != 200:
-            payment_response.render()  # Ensure the response is rendered
-            print(f"Debug: Payment Response - {payment_response.content}")  # Debugging
-            return JsonResponse({"error": "Payment failed. Order not completed."}, status=status.HTTP_400_BAD_REQUEST)
-        print("payment bitti")
-
-        # Save the order
+        order.payment_status = "Paid"  # Mark as paid after successful payment confirmation
+        order.status = "Processing"
         order.save()
 
         # Clear the shopping cart
         cart_items.delete()
 
-        # Create and Send Invoice
-        invoice_request = factory.get(f'/create_invoice/{order.order_id}/')  # Use order.order_id here
-        print("invoice created")
-        invoice_response = create_and_send_invoice(request, order.order_id)  # Call the function to generate and send the invoice
-        print("sad")
+        # Generate and send an invoice
+        factory = RequestFactory()
+        invoice_request = factory.get(f'/create_invoice/{order.id}/')  # Order ID used here
+        invoice_response = create_and_send_invoice(invoice_request, order.id)
         if invoice_response.status_code != 200:
             return JsonResponse({"error": "Invoice generation failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        print("invoice hata verdi gönderilemedi")
 
-        # Move to Delivery Phase
-        print("delivery phase")
-        delivery_request = factory.post(f'/complete_delivery/{order.order_id}/')
-        complete_delivery_response = complete_delivery(delivery_request, order.order_id)
-        print("delivery process yazdırılacak")
-        if complete_delivery_response.status_code != 200:
+        # Display the invoice PDF
+        invoice_pdf_response = view_invoice(invoice_request, order.id)
+        if invoice_pdf_response.status_code != 200:
+            return JsonResponse({"error": "Failed to display the invoice."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Initiate delivery process
+        delivery_request = factory.post(f'/complete_delivery/{order.id}/')  # Order ID used here
+        delivery_response = complete_delivery(delivery_request, order.id)
+        if delivery_response.status_code != 200:
             return JsonResponse({"error": "Delivery process failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        print("delivery process yazdırılamadı hata var")
-        
+
+        # Respond with success
         return JsonResponse({
             "message": "Order placed successfully. Invoice generated and sent. Delivery initiated.",
-            "order_id": order.order_id  # Return the correct order ID
+            "order_id": order.id
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def complete_delivery(request, order_id):
+    """
+    Creates a delivery entry for the given order.
+    """
     try:
-        print(f"Debug: Starting delivery process for order {order_id}")
-        order = get_object_or_404(Order, pk=order_id)
-        print(f"Debug: Order found - {order}")
-        order.status = "Delivered"
-        order.save()
-        print(f"Debug: Order {order_id} status updated to 'Delivered'")
-        return JsonResponse({"message": "Order marked as delivered."}, status=200)
+        # Fetch the order
+        order = get_object_or_404(Order, id=order_id)
+
+        # Determine the delivery address
+        if order.customer and order.customer.home_address:
+            delivery_address = order.customer.home_address
+        else:
+            return JsonResponse({"error": "Customer address is missing for delivery."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create the Delivery object
+        delivery = Delivery.objects.create(
+            order=order,
+            delivery_status="Processing",
+            delivery_address=delivery_address,
+            delivery_date=timezone.now().date()  # Use today's date
+        )
+
+        return JsonResponse({
+            "message": "Delivery created successfully.",
+            "delivery_id": delivery.delivery_id,
+            "order_id": order.id,
+            "delivery_status": delivery.delivery_status,
+            "delivery_address": delivery.delivery_address,
+            "delivery_date": delivery.delivery_date.strftime('%Y-%m-%d'),
+        }, status=status.HTTP_201_CREATED)
+
     except Exception as e:
-        print(f"Error: {e}")
-        return JsonResponse({"error": str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
