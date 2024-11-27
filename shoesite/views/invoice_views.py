@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 
 
-
+'''
 @csrf_exempt
 def send_basic_email(request, customer_id):
     # Fetch the customer
@@ -28,7 +28,7 @@ def send_basic_email(request, customer_id):
         'from_email': from_email,
         'to_email': customer.email,
     })
-
+'''
 @csrf_exempt
 def email_preview(request):
     emails = EmailPreview.objects.all()
@@ -65,7 +65,7 @@ def view_invoice(request, invoice_id):
     response['Content-Disposition'] = f'inline; filename="invoice_{invoice.id}.pdf"'
     return response
 
-'''
+
 # send basic email
 @csrf_exempt
 def send_basic_email(request, customer_id):
@@ -84,7 +84,7 @@ def send_basic_email(request, customer_id):
         return HttpResponse(f"Email successfully sent to {customer.email}")
     except Exception as e:
         return HttpResponse(f"Failed to send email: {e}", status=500)
-'''
+
 
 # Send Invoice via Email
 def send_invoice_email(request, invoice_id):
