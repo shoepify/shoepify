@@ -168,28 +168,55 @@ def add_to_cart_customer(request, user_id, product_id,quantity):
         return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 # remove item from cart
 @csrf_exempt
-@api_view(['DELETE'])
-def remove_from_cart(request, user_id, product_id):
+def remove_from_cart_customer(request, user_id, product_id):
     """Remove product from a user's (customer or guest) shopping cart."""
     try:
-        customer = get_object_or_404(Customer, customer_id=user_id)
-        cart = get_object_or_404(ShoppingCart, customer=customer)
-    except Customer.DoesNotExist:
-        guest = get_object_or_404(Guest, guest_id=user_id)
-        cart = get_object_or_404(ShoppingCart, guest=guest)
-
+        #customer = Customer.objects.filter(customer_id=user_id).first()
+        #cart = get_object_or_404(ShoppingCart, customer_id=user_id)
+        customer = Customer.objects.filter(customer_id=user_id).first()
+     
+        if customer:
+            owner_content_type = ContentType.objects.get_for_model(Customer)
+            owner_object_id = customer.customer_id
+            cart = get_object_or_404(ShoppingCart,owner_content_type=owner_content_type,
+            owner_object_id=owner_object_id)               
+        else:
+                return JsonResponse({'error': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
+    except Customer.DoesNotExist: 
+        return JsonResponse({'error': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
     product = get_object_or_404(Product, product_id=product_id)
-
-    # Ensure the product is saved before referencing in CartItem
-    if product.pk is None:
-        product.save()
-        
     deleted, _ = CartItem.objects.filter(cart=cart, product=product).delete()
 
     if deleted:
         return HttpResponse(status=status.HTTP_204_NO_CONTENT)
+
     return JsonResponse({'status': 'Product not found in cart'}, status=status.HTTP_404_NOT_FOUND)
-#command for merge
+
+@csrf_exempt
+def remove_from_cart_guest(request, user_id, product_id):
+    """Remove product from a user's (customer or guest) shopping cart."""
+    try:
+        #customer = Customer.objects.filter(customer_id=user_id).first()
+        #cart = get_object_or_404(ShoppingCart, customer_id=user_id)
+        guest = Guest.objects.filter(guest_id=user_id).first()
+        
+        if guest:
+            owner_content_type = ContentType.objects.get_for_model(Guest)
+            owner_object_id = guest.guest_id
+            cart = get_object_or_404(ShoppingCart,owner_content_type=owner_content_type,
+            owner_object_id=owner_object_id)                  
+        else:
+                return JsonResponse({'error': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
+    except Guest.DoesNotExist: 
+        return JsonResponse({'error': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
+    product = get_object_or_404(Product, product_id=product_id)
+    deleted, _ = CartItem.objects.filter(cart=cart, product=product).delete()
+
+    if deleted:
+        return HttpResponse(status=status.HTTP_204_NO_CONTENT)
+
+    return JsonResponse({'status': 'Product not found in cart'}, status=status.HTTP_404_NOT_FOUND)
+
 # retrieve the cart
 
 
