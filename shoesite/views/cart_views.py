@@ -405,7 +405,6 @@ def complete_delivery(request, order_id):
         return JsonResponse({
             "message": "Delivery created successfully.",
             "delivery_id": delivery.delivery_id,
-            #"order_id": order,
             "delivery_status": delivery.delivery_status,
             "delivery_address": delivery.delivery_address
         }, status=status.HTTP_201_CREATED)
@@ -413,16 +412,4 @@ def complete_delivery(request, order_id):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    '''
-    try:
-        print(f"Debug: Starting delivery process for order {order_id}")
-        order = get_object_or_404(Order, pk=order_id)
-        print(f"Debug: Order found - {order}")
-        order.status = "Delivered"
-        order.save()
-        print(f"Debug: Order {order_id} status updated to 'Delivered'")
-        return JsonResponse({"message": "Order marked as delivered."}, status=200)
-    except Exception as e:
-        print(f"Error: {e}")
-        return JsonResponse({"error": str(e)}, status=500)
-    '''
+   
