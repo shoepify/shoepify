@@ -178,9 +178,9 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 CORS_ALLOW_ALL_ORIGINS = True
 
 #EMAIL
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.elasticemail.com" # smtp.gmail.com
+EMAIL_PORT = 587 # 2525
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "shoesitecs@gmail.com"
-EMAIL_HOST_PASSWORD = "kufsac-Kigxiw-jiwdi2"
+EMAIL_HOST_PASSWORD = "8FA14B666F9695586B45C0D1D1ED8388E518" # kufsac-Kigxiw-jiwdi2

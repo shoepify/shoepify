@@ -1,12 +1,13 @@
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 from django.http import HttpResponse, JsonResponse
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, send_mail
 from io import BytesIO
 from django.shortcuts import get_object_or_404
-from shoesite.models import Invoice, Order  # Update these imports to match your actual models
+from shoesite.models import Invoice, Order, Customer  # Update these imports to match your actual models
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+
 
 
 # Generate PDF from HTML
@@ -63,6 +64,26 @@ def view_invoice(request, invoice_id):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+# send basic email
+@csrf_exempt
+def send_basic_email(request, customer_id):
+    # Fetch the customer
+    customer = get_object_or_404(Customer, customer_id=customer_id)
+
+    # Email details
+    subject = "Welcome to Our Store"
+    message = f"Hello {customer.name},\n\nThank you for joining us!"
+    from_email = "shoesitecs@gmail.com"  # Your email (must match EMAIL_HOST_USER)
+    recipient_list = [customer.email]
+
+    # Send email
+    try:
+        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+        return HttpResponse(f"Email successfully sent to {customer.email}")
+    except Exception as e:
+        return HttpResponse(f"Failed to send email: {e}", status=500)
+
 
 
 # Send Invoice via Email
