@@ -352,35 +352,14 @@ def place_order(request, user_id):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def complete_delivery(request, order_id):
-    """
-    Creates a delivery entry for the given order.
-    """
     try:
-        # Fetch the order
-        order = get_object_or_404(Order, id=order_id)
-
-        # Determine the delivery address
-        if order.customer and order.customer.home_address:
-            delivery_address = order.customer.home_address
-        else:
-            return JsonResponse({"error": "Customer address is missing for delivery."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Create the Delivery object
-        delivery = Delivery.objects.create(
-            order=order,
-            delivery_status="Processing",
-            delivery_address=delivery_address,
-            delivery_date=timezone.now().date()  # Use today's date
-        )
-
-        return JsonResponse({
-            "message": "Delivery created successfully.",
-            "delivery_id": delivery.delivery_id,
-            "order_id": order.id,
-            "delivery_status": delivery.delivery_status,
-            "delivery_address": delivery.delivery_address,
-            "delivery_date": delivery.delivery_date.strftime('%Y-%m-%d'),
-        }, status=status.HTTP_201_CREATED)
-
+        print(f"Debug: Starting delivery process for order {order_id}")
+        order = get_object_or_404(Order, pk=order_id)
+        print(f"Debug: Order found - {order}")
+        order.status = "Delivered"
+        order.save()
+        print(f"Debug: Order {order_id} status updated to 'Delivered'")
+        return JsonResponse({"message": "Order marked as delivered."}, status=200)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        print(f"Error: {e}")
+        return JsonResponse({"error": str(e)}, status=500)
