@@ -20,6 +20,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes, api_view
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import authentication_classes
+from django.urls import reverse
+import requests
 
 
 
@@ -334,14 +336,11 @@ def place_order(request, user_id):
         # Confirm Payment
         factory = RequestFactory()
         payment_request = factory.post('/confirm_payment/', {'payment_status': 'Success'})
-        print(f"Debug: Payment Request Data - {payment_request.POST}")  # Debugging
         payment_response = confirm_payment(payment_request, order.order_id)  # Use order.order_id here
-        print("payment confirmed")
         if payment_response.status_code != 200:
             payment_response.render()  # Ensure the response is rendered
             print(f"Debug: Payment Response - {payment_response.content}")  # Debugging
             return JsonResponse({"error": "Payment failed. Order not completed."}, status=status.HTTP_400_BAD_REQUEST)
-        print("payment bitti")
 
         # Save the order
         order.save()
@@ -350,22 +349,26 @@ def place_order(request, user_id):
         cart_items.delete()
 
         # Create and Send Invoice
-        invoice_request = factory.get(f'/create_invoice/{order.order_id}/')  # Use order.order_id here
-        print("invoice created")
-        invoice_response = create_and_send_invoice(request, order.order_id)  # Call the function to generate and send the invoice
-        print("sad")
+        #invoice_response = create_and_send_invoice(request, order.order_id)  # Call the function to generate and send the invoice
+        # Create and Send Invoice by making a request to the corresponding URL
+        # Create and Send Invoice using the correct URL pattern
+        invoice_url = reverse('create_and_send_invoice', kwargs={'order_id': order.order_id})
+
+        # Use the RequestFactory to simulate a GET request to the invoice creation view
+        invoice_request = factory.get(invoice_url)  # Use the GET method here
+        invoice_response = create_and_send_invoice(invoice_request, order.order_id)
         if invoice_response.status_code != 200:
             return JsonResponse({"error": "Invoice generation failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        print("invoice hata verdi gönderilemedi")
+        print("invoice created and sent")
 
         # Move to Delivery Phase
         print("delivery phase")
         delivery_request = factory.post(f'/complete_delivery/{order.order_id}/')
         complete_delivery_response = complete_delivery(delivery_request, order.order_id)
         print("delivery process yazdırılacak")
-        if complete_delivery_response.status_code != 200:
+        if complete_delivery_response.status_code != 201:
             return JsonResponse({"error": "Delivery process failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        print("delivery process yazdırılamadı hata var")
+        print("delivery done")
         
         return JsonResponse({
             "message": "Order placed successfully. Invoice generated and sent. Delivery initiated.",
@@ -378,7 +381,39 @@ def place_order(request, user_id):
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def complete_delivery(request, order_id):
+def complete_delivery(request, order_id):    
+    try:
+        # Fetch the order
+        order = get_object_or_404(Order, pk=order_id)
+
+        # Determine the delivery address
+        if order.customer and order.customer.home_address:
+            delivery_address = order.customer.home_address
+        else:
+            return JsonResponse({"error": "Customer address is missing for delivery."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create the Delivery object
+        delivery = Delivery.objects.create(
+            order=order,
+            delivery_status="Processing",
+            delivery_address=delivery_address,
+            delivery_date=timezone.now().date()  # Use today's date
+        )
+        print("delivery created")
+        print(delivery.delivery_status)
+
+        return JsonResponse({
+            "message": "Delivery created successfully.",
+            "delivery_id": delivery.delivery_id,
+            #"order_id": order,
+            "delivery_status": delivery.delivery_status,
+            "delivery_address": delivery.delivery_address
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    '''
     try:
         print(f"Debug: Starting delivery process for order {order_id}")
         order = get_object_or_404(Order, pk=order_id)
@@ -390,3 +425,4 @@ def complete_delivery(request, order_id):
     except Exception as e:
         print(f"Error: {e}")
         return JsonResponse({"error": str(e)}, status=500)
+    '''

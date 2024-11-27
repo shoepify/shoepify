@@ -120,7 +120,7 @@ urlpatterns = [
     #invoice mail
     path('invoice/<int:invoice_id>/view/', view_invoice, name='view_invoice'),
     path('invoice/<int:invoice_id>/email/', send_invoice_email, name='send_invoice_email'),
-    path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
+    #path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
     path('invoice/<int:invoice_id>/create-pdf/', create_pdf, name='create_pdf'),
     path('send-email/<int:customer_id>/', send_basic_email, name='send_basic_email'),
 ]
