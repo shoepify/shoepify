@@ -4,7 +4,7 @@
 from django.urls import path, include, re_path
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
-from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, remove_from_cart, get_cart_customer, get_cart_guest, place_order, complete_delivery #, order_status
+from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery#, remove_from_cart #, order_status
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.confirm_payment import confirm_payment
@@ -15,7 +15,7 @@ from shoesite.views.customer_views import signup_customer, login_customer
 from shoesite.views.pm_views import signup_product_manager, login_product_manager
 from shoesite.views.sm_views import signup_sales_manager, login_sales_manager
 from .views.guest_views import home_view
-from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice, create_pdf
+from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice, create_pdf, send_basic_email
 #from shoesite.views import login, signup
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
@@ -80,7 +80,7 @@ urlpatterns = [
     #path('cart/<int:customer_id>/add/<int:product_id>/', add_to_cart, name='add_to_cart'),
     path('add_to_cart_guest/<int:user_id>/<int:product_id>/<int:quantity>/', add_to_cart_guest, name='add_to_cart_guest'),
     path('add_to_cart_customer/<int:user_id>/<int:product_id>/<int:quantity>/', add_to_cart_customer, name='add_to_cart_customer'),
-    path('cart/<int:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
+    #path('cart/<int:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
     path('cart_customer/<int:user_id>/', get_cart_customer, name='get_cart'),
     path('cart_guest/<int:user_id>/', get_cart_guest, name='get_cart'),
 
@@ -120,6 +120,7 @@ urlpatterns = [
     #invoice mail
     path('invoice/<int:invoice_id>/view/', view_invoice, name='view_invoice'),
     path('invoice/<int:invoice_id>/email/', send_invoice_email, name='send_invoice_email'),
-    path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
+    #path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
     path('invoice/<int:invoice_id>/create-pdf/', create_pdf, name='create_pdf'),
+    path('send-email/<int:customer_id>/', send_basic_email, name='send_basic_email'),
 ]
