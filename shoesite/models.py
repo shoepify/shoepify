@@ -151,8 +151,15 @@ class Order(models.Model):
     discount_applied = models.DecimalField(max_digits=10, decimal_places=2)
     payment_status = models.CharField(max_length=50)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    status = models.CharField(max_length=20, choices=[('Processing', 'Processing'), ('In-Transit', 'In-Transit'), ('Delivered', 'Delivered')])
+    status = models.CharField(max_length=20, choices=[('Processing', 'Processing'),
+                            ('In-Transit', 'In-Transit'),
+                            ('Delivered', 'Delivered')],
+                            null=True,  # Allow null values
+                            blank=True,  # Allow blank values in forms
+                            default="NULL"  # Set default to None (interpreted as NULL in the database)
+                            )
     #created_at = models.DateTimeField(auto_now_add=True)
+    #id = property(lambda self: self.order_id)
 
     
 
@@ -183,8 +190,16 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.model} (Cart: {self.cart.cart_id})"
 
+class Invoice(models.Model):
+    invoice_id = models.AutoField(primary_key=True)
+    order = models.OneToOneField(Order, on_delete=models.CASCADE)
+    invoice_date = models.DateField()
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    def __str__(self):
+        return f"Invoice for Order #{self.order.id}"
 
 
+    
 # Delivery Model
 class Delivery(models.Model):
     delivery_id = models.AutoField(primary_key=True)
@@ -246,9 +261,3 @@ class Refund(models.Model): # new table for refund
         return f"Refund {self.refund_id} for Order Item {self.order_item.order_item_id}"
 
 
-class Invoice(models.Model):
-    order = models.OneToOneField("Order", on_delete=models.CASCADE, related_name="invoice")
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Invoice for Order #{self.order.id}"

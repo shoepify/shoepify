@@ -28,10 +28,18 @@ Content-Type: application/json
 
 ###
 
-GET http://127.0.0.1:8000/test_token
+POST http://127.0.0.1:8000/products/create/
 
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzMyMTE1NjgzLCJpYXQiOjE3MzIxMTIwODMsImp0aSI6IjYwMTkzZTc0MzBmZjRlZjk5MTQwY2QwZGJmNjhkMjliIiwidXNlcl9pZCI6NCwiZW1haWwiOiJjYW4xQGdtYWlsLmNvbSJ9.Qj0xBDKBNMY1Aac7iNLIll8sYo_ccnqwJk7A3x3MY5c
-
+{
+        "model": "XYZ-123",
+        "serial_number": "SN0001",
+        "stock": 50,
+        "warranty_status": "Valid",
+        "distributor_info": "Example Distributor",
+        "description": "A high-quality shoe.",
+        "base_price": "100.00",
+        "category": "Footwear"
+    }
 ###
 POST http://127.0.0.1:8000/products/10/add_comment/
 
