@@ -372,7 +372,8 @@ def place_order(request, user_id):
         
         return JsonResponse({
             "message": "Order placed successfully. Invoice generated and sent. Delivery initiated.",
-            "order_id": order.order_id  # Return the correct order ID
+            "order_id": order.order_id # Return the correct order ID
+
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
