@@ -361,6 +361,9 @@ def place_order(request, user_id):
             return JsonResponse({"error": "Invoice generation failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         print("invoice created and sent")
 
+        invoice_id = Invoice.objects.get(order=order).invoice_id  # Adjust based on how you store the invoice
+        print(invoice_id)
+
         # Move to Delivery Phase
         print("delivery phase")
         delivery_request = factory.post(f'/complete_delivery/{order.order_id}/')
@@ -372,8 +375,9 @@ def place_order(request, user_id):
         
         return JsonResponse({
             "message": "Order placed successfully. Invoice generated and sent. Delivery initiated.",
-            "order_id": order.order_id # Return the correct order ID
-
+            "order_id": order.order_id, # Return the correct order ID
+            "invoice_id": invoice_id,  # Return the generated invoice ID
+            "total amount": order.total_amount
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
