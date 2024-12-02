@@ -30,13 +30,13 @@ def add_rating(request, product_id):
         if Rating.objects.filter(customer_id=customer_id, product_id=product_id).exists():
             return JsonResponse({"error": "You have already rated this product."}, status=400)
         
-        """
+        
         # Check if the customer has purchased the product
         has_purchased = OrderItem.objects.filter(order__customer_id=customer_id, product__product_id=product_id).exists()
         
         if not has_purchased:
             return JsonResponse({"error": "You cannot rate a product before buying it."}, status=403)
-        """
+        
         # Save the rating (no approval status needed for ratings)
         rating = Rating.objects.create(
             product_id=product_id,
@@ -92,3 +92,4 @@ def delete_rating(request, product_id, rating_id):
             return JsonResponse({'error': 'Invalid JSON.'}, status=400)
         except ValueError:
             return JsonResponse({'error': 'Invalid customer_id provided.'}, status=400)
+
