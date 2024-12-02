@@ -4,7 +4,7 @@
 from django.urls import path, include, re_path
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
-from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer, check_cart#, remove_from_cart #, order_status
+from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer, check_cart, update_order_status, get_all_orders#, remove_from_cart #, order_status
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.confirm_payment import confirm_payment
@@ -92,7 +92,9 @@ urlpatterns = [
     path('complete_delivery/<int:order_id>/', complete_delivery, name='complete_delivery'),
     path('payment/confirm/<int:order_id>/', confirm_payment, name='confirm_payment'),
     path('invoice/create/<int:order_id>/', create_and_send_invoice, name='create_and_send_invoice'),
-    
+    path('get_all_orders/', get_all_orders, name='get_all_orders'),
+    path('update_order_status/<int:order_id>/', update_order_status, name='update_order_status'),
+
     # Wishlist paths
     path('wishlist/<int:customer_id>/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),
     path('wishlist/<int:customer_id>/remove/<int:product_id>/', remove_from_wishlist, name='remove_from_wishlist'),
