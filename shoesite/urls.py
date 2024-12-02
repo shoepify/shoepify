@@ -4,7 +4,7 @@
 from django.urls import path, include, re_path
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
-from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer#, remove_from_cart #, order_status
+from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer, check_cart#, remove_from_cart #, order_status
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.confirm_payment import confirm_payment
@@ -83,7 +83,9 @@ urlpatterns = [
     #path('cart/<int:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
     path('cart_customer/<int:user_id>/', get_cart_customer, name='get_cart'),
     path('cart_guest/<int:user_id>/', get_cart_guest, name='get_cart'),
-
+    
+    # order related paths
+    path('check_cart/<int:user_id>/', check_cart, name='check_cart'),
     path('order/place/<int:user_id>/', place_order, name='place_order'),
     path('get_orders/<int:customer_id>/', get_orders_by_customer, name='get_orders_by_customer'),
     #path('delivery/complete/<int:order_id>/', complete_delivery, name='complete_delivery'),
@@ -91,11 +93,6 @@ urlpatterns = [
     path('payment/confirm/<int:order_id>/', confirm_payment, name='confirm_payment'),
     path('invoice/create/<int:order_id>/', create_and_send_invoice, name='create_and_send_invoice'),
     
-    # Order-related paths
-    #path('order/<int:customer_id>/place/', place_order, name='place_order'),
-    #path('order/<int:order_id>/status/', order_status, name='order_status'),
-   
-
     # Wishlist paths
     path('wishlist/<int:customer_id>/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),
     path('wishlist/<int:customer_id>/remove/<int:product_id>/', remove_from_wishlist, name='remove_from_wishlist'),
