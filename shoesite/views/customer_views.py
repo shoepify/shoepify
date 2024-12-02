@@ -82,6 +82,7 @@ def login_customer(request):
         # if wrong return error
         return Response({'error': 'Invalid password'}, status=status.HTTP_401_UNAUTHORIZED)
     # if all good, return tokens
+    
     try:
     # Get guest from session
         guest_id = request.session.get('guest_id')
