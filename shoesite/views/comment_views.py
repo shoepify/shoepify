@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from shoesite.models import  Comment, Product, Customer, OrderItem, ProductManager
+from shoesite.models import  Comment, Product, Customer, OrderItem, ProductManager, Order
 import json
 from django.db.models import Q  # Add this to enable complex query filtering
 
@@ -28,6 +28,16 @@ def add_comment(request, product_id):
         
         if not has_purchased:
             return JsonResponse({"error": "You cannot give comment before buying it."}, status=403)
+        
+        # Check if the product delivery status is 'Delivered'
+        order_delivered = Order.objects.filter(
+            customer_id=customer_id,
+            orderitem__product_id=product_id,
+            status='Delivered'
+        ).exists()
+        
+        if not order_delivered:
+                return JsonResponse({"error": "You can only comment after the product is delivered."}, status=403)
         
         # Check if the customer has already commented on this product
         if Comment.objects.filter(customer_id=customer_id, product_id=product_id).exists():
