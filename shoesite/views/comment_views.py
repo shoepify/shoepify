@@ -24,7 +24,6 @@ def add_comment(request, product_id):
             return JsonResponse({"error": "Invalid customer ID."}, status=400)
         
         # Check if the customer has purchased the product
-        
         has_purchased = OrderItem.objects.filter(order__customer_id=customer_id, product__product_id=product_id).exists()
         
         if not has_purchased:

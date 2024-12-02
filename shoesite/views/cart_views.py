@@ -348,10 +348,7 @@ def place_order(request, user_id):
         # Clear the shopping cart
         cart_items.delete()
 
-        # Create and Send Invoice
-        #invoice_response = create_and_send_invoice(request, order.order_id)  # Call the function to generate and send the invoice
         # Create and Send Invoice by making a request to the corresponding URL
-        # Create and Send Invoice using the correct URL pattern
         invoice_url = reverse('create_and_send_invoice', kwargs={'order_id': order.order_id})
 
         # Use the RequestFactory to simulate a GET request to the invoice creation view
@@ -458,6 +455,45 @@ def get_orders_by_customer(request, customer_id):
             })
         
         return JsonResponse({"orders": orders_data}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def check_cart(request, user_id):
+    """
+    Check the validity of the cart: existence, non-emptiness, and sufficient stock.
+    """
+    try:
+        # Determine if the user is a customer or guest and retrieve their cart
+        try:
+            customer = Customer.objects.get(customer_id=user_id)
+            customer_content_type = ContentType.objects.get_for_model(Customer)
+            cart = ShoppingCart.objects.filter(
+                owner_content_type=customer_content_type,
+                owner_object_id=customer.id
+            ).first()
+        except Customer.DoesNotExist:
+            guest = get_object_or_404(Guest, guest_id=user_id)
+            cart = ShoppingCart.objects.filter(owner_object_id=guest.guest_id).first()
+
+        if not cart:
+            return JsonResponse({"error": "Cart not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        cart_items = CartItem.objects.filter(cart=cart)
+
+        if not cart_items.exists():
+            return JsonResponse({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check stock for each item in the cart
+        for item in cart_items:
+            if item.product.stock < item.quantity:
+                return JsonResponse({"error": f"Insufficient stock for {item.product.model}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # If all checks pass, return success
+        return JsonResponse({"message": "Cart is valid."}, status=status.HTTP_200_OK)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
