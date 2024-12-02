@@ -497,3 +497,65 @@ def check_cart(request, user_id):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@csrf_exempt
+def update_order_status(request, order_id):
+    """
+    Update the status of an order:
+    - If 'Processing', change to 'In Transit'.
+    - If 'In Transit', change to 'Delivered'.
+    - Otherwise, do nothing.
+    """
+    if request.method == 'PUT':  # Only allow PUT method for status updates
+        try:
+            # Ensure the order_id is an integer
+            order_id = int(order_id)
+
+            # Fetch the order using 'order_id'
+            order = get_object_or_404(Order, pk=order_id)
+
+            # Update the status based on current value
+            if order.status == 'Processing':
+                order.status = 'In Transit'
+                order.save()
+                return JsonResponse({"message": f"Order #{order_id} status updated to 'In Transit'."}, status=200)
+            elif order.status == 'In Transit':
+                order.status = 'Delivered'
+                order.save()
+                return JsonResponse({"message": f"Order #{order_id} status updated to 'Delivered'."}, status=200)
+            else:
+                return JsonResponse({
+                    "error": f"Order status is '{order.status}', no update performed."
+                }, status=400)
+        except ValueError:
+            return JsonResponse({"error": "Invalid order_id, must be an integer."}, status=400)
+
+    return JsonResponse({"error": "Invalid request method. Please use PUT."}, status=405)  # Handle incorrect methods
+
+
+def get_all_orders(request):
+    """
+    Fetch all orders from the database and return their details.
+    """
+    try:
+        # Fetch all orders
+        orders = Order.objects.all()
+
+        # Structure the data for response
+        orders_data = [
+            {
+                "order_id": order.order_id,
+                "customer_name": order.customer.name if order.customer else "Guest",
+                "order_date": order.order_date.strftime("%Y-%m-%d"),
+                "total_amount": order.total_amount,
+                "status": order.status,
+            }
+            for order in orders
+        ]
+
+        return JsonResponse({"orders": orders_data}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
