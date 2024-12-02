@@ -24,12 +24,12 @@ def add_comment(request, product_id):
             return JsonResponse({"error": "Invalid customer ID."}, status=400)
         
         # Check if the customer has purchased the product
-        """
+        
         has_purchased = OrderItem.objects.filter(order__customer_id=customer_id, product__product_id=product_id).exists()
         
         if not has_purchased:
             return JsonResponse({"error": "You cannot give comment before buying it."}, status=403)
-        """
+        
         # Check if the customer has already commented on this product
         if Comment.objects.filter(customer_id=customer_id, product_id=product_id).exists():
             return JsonResponse({"error": "You have already commented on this product."}, status=400)
