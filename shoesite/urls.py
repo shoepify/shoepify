@@ -4,7 +4,7 @@
 from django.urls import path, include, re_path
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
-from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer, check_cart, update_order_status, get_all_orders#, remove_from_cart #, order_status
+from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer, check_cart, update_order_status, get_all_orders,remove_from_cart_guest,remove_from_cart_customer#, remove_from_cart #, order_status
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.confirm_payment import confirm_payment
@@ -82,7 +82,9 @@ urlpatterns = [
     #path('cart/<int:customer_id>/add/<int:product_id>/', add_to_cart, name='add_to_cart'),
     path('add_to_cart_guest/<int:user_id>/<int:product_id>/<int:quantity>/', add_to_cart_guest, name='add_to_cart_guest'),
     path('add_to_cart_customer/<int:user_id>/<int:product_id>/<int:quantity>/', add_to_cart_customer, name='add_to_cart_customer'),
-    #path('cart/<int:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
+    #path('cart/<int:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart_guest'),
+    path('customer/<int:user_id>/remove/<int:product_id>/', remove_from_cart_customer, name='remove_from_cart'),
+    path('guest/<int:user_id>/remove/<int:product_id>/', remove_from_cart_guest, name='remove_from_cart'),
     path('cart_customer/<int:user_id>/', get_cart_customer, name='get_cart'),
     path('cart_guest/<int:user_id>/', get_cart_guest, name='get_cart'),
     
