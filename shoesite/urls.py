@@ -15,7 +15,10 @@ from shoesite.views.pm_views import signup_product_manager, login_product_manage
 from shoesite.views.sm_views import signup_sales_manager, login_sales_manager
 from .views.guest_views import home_view
 from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice
+<<<<<<< HEAD
 from .views.category_views import add_category, remove_category
+=======
+>>>>>>> 13c2cb3e0ffbfd901ae0d3a0855ef583445776be
 #from shoesite.views import login, signup
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
@@ -76,7 +79,6 @@ urlpatterns = [
     path('products/<int:product_id>/delete/', delete_product, name='delete_product'),
     path('products/search/', search_products, name='search_products'),
 
-
     # Shopping Cart paths
     #path('cart/<int:customer_id>/add/<int:product_id>/', add_to_cart, name='add_to_cart'),
     path('add_to_cart_guest/<int:user_id>/<int:product_id>/<int:quantity>/', add_to_cart_guest, name='add_to_cart_guest'),
@@ -85,10 +87,21 @@ urlpatterns = [
     path('guest/<int:user_id>/remove/<int:product_id>/', remove_from_cart_guest, name='remove_from_cart'),
     path('cart_customer/<int:user_id>/', get_cart_customer, name='get_cart'),
     path('cart_guest/<int:user_id>/', get_cart_guest, name='get_cart'),
+<<<<<<< HEAD
     
+=======
+
+
+>>>>>>> 13c2cb3e0ffbfd901ae0d3a0855ef583445776be
     # Order-related paths
     #path('order/<int:customer_id>/place/', place_order, name='place_order'),
     #path('order/<int:order_id>/status/', order_status, name='order_status'),
+
+    # Order-related paths
+    #path('order/<int:customer_id>/place/', place_order, name='place_order'),
+    #path('order/<int:order_id>/status/', order_status, name='order_status'),
+   
+
     # Wishlist paths
     path('wishlist/<int:customer_id>/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),
     path('wishlist/<int:customer_id>/remove/<int:product_id>/', remove_from_wishlist, name='remove_from_wishlist'),
@@ -104,7 +117,7 @@ urlpatterns = [
     path('products/<int:product_id>/delete_comment/<int:comment_id>/', delete_comment, name='delete_comment'),
     path('pending_comments/', get_pending_comments, name='get_pending_comments'),
     path('update_approval/<int:comment_id>/', update_approval, name='update_approval'),
-    #http://127.0.0.1:8000/products/10/comments/?approved=true           For approved comments
+    #http://127.0.0.1:8000/products/<int:product_id>/comments/?approved=true           For approved comments
 
     # For adding ratings
     path('products/<int:product_id>/add_rating/', add_rating, name='add_rating'),
