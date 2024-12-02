@@ -417,4 +417,47 @@ def complete_delivery(request, order_id):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-   
+@csrf_exempt
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_orders_by_customer(request, customer_id):
+    """
+    Get all orders placed by a specific customer using their customer_id.
+    """
+    try:
+        # Müşteriyi bul
+        customer = get_object_or_404(Customer, customer_id=customer_id)
+        
+        # Bu müşteri için oluşturulan siparişleri al
+        orders = Order.objects.filter(customer=customer)
+        
+        if not orders.exists():
+            return JsonResponse({"error": "No orders found for this customer."}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Siparişleri serileştir
+        orders_data = []
+        for order in orders:
+            order_items = OrderItem.objects.filter(order=order)
+            order_items_data = [
+                {
+                    "product_id": item.product.product_id,
+                    "product_model": item.product.model,
+                    "quantity": item.quantity,
+                    "price_per_item": item.price_per_item,
+                }
+                for item in order_items
+            ]
+            orders_data.append({
+                "order_id": order.order_id,
+                "order_date": order.order_date,
+                "total_amount": order.total_amount,
+                "discount_applied": order.discount_applied,
+                "payment_status": order.payment_status,
+                "status": order.status,
+                "items": order_items_data,
+            })
+        
+        return JsonResponse({"orders": orders_data}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
