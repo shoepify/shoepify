@@ -15,10 +15,7 @@ from shoesite.views.pm_views import signup_product_manager, login_product_manage
 from shoesite.views.sm_views import signup_sales_manager, login_sales_manager
 from .views.guest_views import home_view
 from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice
-<<<<<<< HEAD
 from .views.category_views import add_category, remove_category
-=======
->>>>>>> 13c2cb3e0ffbfd901ae0d3a0855ef583445776be
 #from shoesite.views import login, signup
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
@@ -87,12 +84,9 @@ urlpatterns = [
     path('guest/<int:user_id>/remove/<int:product_id>/', remove_from_cart_guest, name='remove_from_cart'),
     path('cart_customer/<int:user_id>/', get_cart_customer, name='get_cart'),
     path('cart_guest/<int:user_id>/', get_cart_guest, name='get_cart'),
-<<<<<<< HEAD
     
-=======
 
 
->>>>>>> 13c2cb3e0ffbfd901ae0d3a0855ef583445776be
     # Order-related paths
     #path('order/<int:customer_id>/place/', place_order, name='place_order'),
     #path('order/<int:order_id>/status/', order_status, name='order_status'),
