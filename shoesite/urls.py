@@ -9,7 +9,7 @@ from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist,
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.confirm_payment import confirm_payment
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
-from shoesite.views.comment_views import add_comment, get_comments, delete_comment, get_pending_comments, update_approval
+from shoesite.views.comment_views import add_comment, get_comments, delete_comment, get_pending_comments, update_approval, disapprove_comment
 from shoesite.views.auth_views import login, signup, get_tokens_for_user, test_token
 from shoesite.views.customer_views import signup_customer, login_customer
 from shoesite.views.pm_views import signup_product_manager, login_product_manager
@@ -108,6 +108,7 @@ urlpatterns = [
     path('products/<int:product_id>/delete_comment/<int:comment_id>/', delete_comment, name='delete_comment'),
     path('pending_comments/', get_pending_comments, name='get_pending_comments'),
     path('update_approval/<int:comment_id>/', update_approval, name='update_approval'),
+    path('disapprove_comment/<int:comment_id>/', disapprove_comment, name='disapprove_comment'),
     #http://127.0.0.1:8000/products/<int:product_id>/comments/?approved=true           For approved comments
 
     # For adding ratings

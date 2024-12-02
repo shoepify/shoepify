@@ -184,3 +184,25 @@ def update_approval(request, comment_id):
     else:
         return JsonResponse({"error": "Unauthorized access."}, status=403)
     """
+@csrf_exempt
+def disapprove_comment(request, comment_id):
+    if request.method == 'PUT':  # Only allow PUT method for disapproval
+        try:
+            # Ensure the comment_id is an integer
+            comment_id = int(comment_id)
+
+            # Fetch the comment to be disapproved using 'comment_id' instead of 'id'
+            comment = get_object_or_404(Comment, comment_id=comment_id)  # Correct field name here
+
+            # Check the current approval status
+            if comment.approval_status == 'Pending':
+                # Disapprove the comment
+                comment.approval_status = 'Rejected'
+                comment.save()
+                return JsonResponse({"message": "Comment disapproved successfully."}, status=200)
+            else:
+                return JsonResponse({"error": "Comment is already approved or rejected."}, status=400)
+        except ValueError:
+            return JsonResponse({"error": "Invalid comment_id, must be an integer."}, status=400)
+    
+    return JsonResponse({"error": "Invalid request method. Please use PUT."}, status=405)  # Handle incorrect methods
