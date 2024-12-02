@@ -1,7 +1,7 @@
 POST http://127.0.0.1:8000/login/customer/
 Content-Type: application/json
 
-{"email":"can@gmail.com","password":"1234"}
+{"email":"can2@gmail.com","password":"1234"}
 
 ###
 
