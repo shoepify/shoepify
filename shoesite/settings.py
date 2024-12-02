@@ -14,6 +14,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 import mysql.connector
+import os
 #import MySQLdb
 import pymysql
 # Use pymysql as MySQLdb
@@ -95,11 +96,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'shoesite.urls'
 
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [os.path.join(BASE_DIR, 'shoesite/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -111,7 +112,6 @@ TEMPLATES = [
         },
     },
 ]
-
 WSGI_APPLICATION = 'shoesite.wsgi.application'
 
 
@@ -177,10 +177,22 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the broker
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 CORS_ALLOW_ALL_ORIGINS = True
 
+
 #EMAIL
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.example.com"
-EMAIL_PORT = 587
+EMAIL_HOST = "smtp.gmail.com" # smtp.gmail.com
+EMAIL_PORT = 587 # 2525
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "your_email@example.com"
-EMAIL_HOST_PASSWORD = "your_password"
+EMAIL_HOST_USER = "shoesitecs@gmail.com"
+EMAIL_HOST_PASSWORD = "rgex eusv fayp xrly" # kufsac-Kigxiw-jiwdi2
+
+# elastic email
+'''
+#EMAIL
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.elasticemail.com" # smtp.gmail.com
+EMAIL_PORT = 587 # 2525
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "shoesitecs@gmail.com"
+EMAIL_HOST_PASSWORD = "8FA14B666F9695586B45C0D1D1ED8388E518" # kufsac-Kigxiw-jiwdi2
+'''

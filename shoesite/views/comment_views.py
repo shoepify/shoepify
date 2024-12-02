@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from shoesite.models import  Comment, Product, Customer, OrderItem, ProductManager
+from shoesite.models import  Comment, Product, Customer, OrderItem, ProductManager, Order
 import json
 from django.db.models import Q  # Add this to enable complex query filtering
 
@@ -24,12 +24,21 @@ def add_comment(request, product_id):
             return JsonResponse({"error": "Invalid customer ID."}, status=400)
         
         # Check if the customer has purchased the product
-        """
         has_purchased = OrderItem.objects.filter(order__customer_id=customer_id, product__product_id=product_id).exists()
         
         if not has_purchased:
             return JsonResponse({"error": "You cannot give comment before buying it."}, status=403)
-        """
+        
+        # Check if the product delivery status is 'Delivered'
+        order_delivered = Order.objects.filter(
+            customer_id=customer_id,
+            orderitem__product_id=product_id,
+            status='Delivered'
+        ).exists()
+        
+        if not order_delivered:
+                return JsonResponse({"error": "You can only comment after the product is delivered."}, status=403)
+        
         # Check if the customer has already commented on this product
         if Comment.objects.filter(customer_id=customer_id, product_id=product_id).exists():
             return JsonResponse({"error": "You have already commented on this product."}, status=400)
@@ -72,6 +81,7 @@ def get_comments(request, product_id):
             {
                 "comment_id": comment.comment_id,
                 "customer_id": comment.customer.customer_id,
+                "name": comment.customer.name,
                 "comment": comment.comment,
                 "approval_status": comment.approval_status,
             }
@@ -184,3 +194,25 @@ def update_approval(request, comment_id):
     else:
         return JsonResponse({"error": "Unauthorized access."}, status=403)
     """
+@csrf_exempt
+def disapprove_comment(request, comment_id):
+    if request.method == 'PUT':  # Only allow PUT method for disapproval
+        try:
+            # Ensure the comment_id is an integer
+            comment_id = int(comment_id)
+
+            # Fetch the comment to be disapproved using 'comment_id' instead of 'id'
+            comment = get_object_or_404(Comment, comment_id=comment_id)  # Correct field name here
+
+            # Check the current approval status
+            if comment.approval_status == 'Pending':
+                # Disapprove the comment
+                comment.approval_status = 'Rejected'
+                comment.save()
+                return JsonResponse({"message": "Comment disapproved successfully."}, status=200)
+            else:
+                return JsonResponse({"error": "Comment is already approved or rejected."}, status=400)
+        except ValueError:
+            return JsonResponse({"error": "Invalid comment_id, must be an integer."}, status=400)
+    
+    return JsonResponse({"error": "Invalid request method. Please use PUT."}, status=405)  # Handle incorrect methods

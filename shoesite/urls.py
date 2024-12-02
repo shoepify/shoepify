@@ -4,11 +4,12 @@
 from django.urls import path, include, re_path
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
-from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, remove_from_cart_customer,remove_from_cart_guest, get_cart_customer, get_cart_guest#, place_order, order_status
+from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer, check_cart, update_order_status, get_all_orders#, remove_from_cart #, order_status
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund
+from shoesite.views.confirm_payment import confirm_payment
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
-from shoesite.views.comment_views import add_comment, get_comments, delete_comment, get_pending_comments, update_approval
+from shoesite.views.comment_views import add_comment, get_comments, delete_comment, get_pending_comments, update_approval, disapprove_comment
 from shoesite.views.auth_views import login, signup, get_tokens_for_user, test_token
 from shoesite.views.customer_views import signup_customer, login_customer
 from shoesite.views.pm_views import signup_product_manager, login_product_manager
@@ -16,6 +17,7 @@ from shoesite.views.sm_views import signup_sales_manager, login_sales_manager
 from .views.guest_views import home_view
 from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice
 from .views.category_views import add_category, remove_category
+from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice, create_pdf, send_basic_email
 #from shoesite.views import login, signup
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
@@ -80,8 +82,7 @@ urlpatterns = [
     #path('cart/<int:customer_id>/add/<int:product_id>/', add_to_cart, name='add_to_cart'),
     path('add_to_cart_guest/<int:user_id>/<int:product_id>/<int:quantity>/', add_to_cart_guest, name='add_to_cart_guest'),
     path('add_to_cart_customer/<int:user_id>/<int:product_id>/<int:quantity>/', add_to_cart_customer, name='add_to_cart_customer'),
-    path('customer/<int:user_id>/remove/<int:product_id>/', remove_from_cart_customer, name='remove_from_cart'),
-    path('guest/<int:user_id>/remove/<int:product_id>/', remove_from_cart_guest, name='remove_from_cart'),
+    #path('cart/<int:customer_id>/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
     path('cart_customer/<int:user_id>/', get_cart_customer, name='get_cart'),
     path('cart_guest/<int:user_id>/', get_cart_guest, name='get_cart'),
     
@@ -95,6 +96,18 @@ urlpatterns = [
     #path('order/<int:customer_id>/place/', place_order, name='place_order'),
     #path('order/<int:order_id>/status/', order_status, name='order_status'),
    
+
+    # order related paths
+    path('check_cart/<int:user_id>/', check_cart, name='check_cart'),
+    path('order/place/<int:user_id>/', place_order, name='place_order'),
+    path('get_orders/<int:customer_id>/', get_orders_by_customer, name='get_orders_by_customer'),
+    #path('delivery/complete/<int:order_id>/', complete_delivery, name='complete_delivery'),
+    path('complete_delivery/<int:order_id>/', complete_delivery, name='complete_delivery'),
+    path('payment/confirm/<int:order_id>/', confirm_payment, name='confirm_payment'),
+    path('invoice/create/<int:order_id>/', create_and_send_invoice, name='create_and_send_invoice'),
+    path('get_all_orders/', get_all_orders, name='get_all_orders'),
+    path('update_order_status/<int:order_id>/', update_order_status, name='update_order_status'),
+
 
     # Wishlist paths
     path('wishlist/<int:customer_id>/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),
@@ -111,6 +124,7 @@ urlpatterns = [
     path('products/<int:product_id>/delete_comment/<int:comment_id>/', delete_comment, name='delete_comment'),
     path('pending_comments/', get_pending_comments, name='get_pending_comments'),
     path('update_approval/<int:comment_id>/', update_approval, name='update_approval'),
+    path('disapprove_comment/<int:comment_id>/', disapprove_comment, name='disapprove_comment'),
     #http://127.0.0.1:8000/products/<int:product_id>/comments/?approved=true           For approved comments
 
     # For adding ratings
@@ -125,6 +139,9 @@ urlpatterns = [
 
     #categories
     path('category/add/', add_category, name='add_category'),
-    path('category/remove/<str:category_name>/', remove_category, name='list_categories'),
+    path('category/remove/<str:category_name>/', remove_category, name='remove_categories'),
 
+    #path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
+    path('invoice/<int:invoice_id>/create-pdf/', create_pdf, name='create_pdf'),
+    path('send-email/<int:customer_id>/', send_basic_email, name='send_basic_email'),
 ]

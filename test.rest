@@ -1,0 +1,50 @@
+POST http://127.0.0.1:8000/login/customer/
+Content-Type: application/json
+
+{"email":"can7@gmail.com","password":"1234"}
+
+###
+
+POST http://127.0.0.1:8000/signup/customer/
+Content-Type: application/json
+
+{   
+    "name": "can7",
+    "tax_id": "123q7922523",
+    
+    "email": "can7@gmail.com",
+    "password": "1234",
+    "home_address": "canwqkjrdhuwq"
+}
+
+###
+
+POST http://127.0.0.1:8000/token/refresh/
+Content-Type: application/json
+
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTczMTUyOTA0MiwiaWF0IjoxNzMxNDQyNjQyLCJqdGkiOiI2Y2Y3MGJjODE0ZmI0OTc3ODQxZmM5NmVkODIwZGU0YyIsInVzZXJfaWQiOjIwLCJlbWFpbCI6InNlbGltQGdtYWlsLmNvbSJ9.GSbA012oROZFLJmxwf82kRo8i_uLbckMJnhOtnYJaFA"
+}
+
+###
+
+POST http://127.0.0.1:8000/products/create/
+
+{
+        "model": "XYZ-123",
+        "serial_number": "SN0001",
+        "stock": 50,
+        "warranty_status": "Valid",
+        "distributor_info": "Example Distributor",
+        "description": "A high-quality shoe.",
+        "base_price": "100.00",
+        "category": "Footwear"
+    }
+###
+POST http://127.0.0.1:8000/products/10/add_comment/
+
+{
+  "customer_id": 2,
+  "comment": "This is a great product!"
+}
+
