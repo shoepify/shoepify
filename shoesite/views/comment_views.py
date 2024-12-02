@@ -72,6 +72,7 @@ def get_comments(request, product_id):
             {
                 "comment_id": comment.comment_id,
                 "customer_id": comment.customer.customer_id,
+                "name": comment.customer.name,
                 "comment": comment.comment,
                 "approval_status": comment.approval_status,
             }

@@ -135,7 +135,7 @@ def login_customer(request):
 def get_customer(request, customer_id):
     if request.method == 'GET':
         customer = get_object_or_404(Customer, customer_id=customer_id)
-        return JsonResponse({'customer_id': customer.id, 'name': customer.name})
+        return JsonResponse({'customer_id': customer.id, 'name': customer.name, 'email': customer.email, 'tax_id': customer.tax_id, 'address': customer.home_address })
 
 @csrf_exempt
 def create_customer(request):
