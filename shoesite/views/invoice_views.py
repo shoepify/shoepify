@@ -52,6 +52,35 @@ def create_pdf(request, invoice_id):
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)
 
+# Create PDF for Invoice
+def create_pdf_ozan(request, invoice_id):
+    """Generate a PDF for the specified invoice."""
+    try:
+        # Fetch the invoice
+        invoice = get_object_or_404(Invoice, invoice_id=invoice_id)
+        
+        # Prepare context for rendering the template
+        context = {'invoice': invoice, 'order': invoice.order}
+
+        # Render the invoice template with the context
+        html_content = render_to_string('invoice_template.html', context)
+
+        # Create a BytesIO buffer to hold the PDF
+        pdf_buffer = BytesIO()
+        pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
+
+        if pisa_status.err:
+            return HttpResponse('Error generating PDF', status=500)
+
+        # Return the generated PDF as an HTTP response
+        pdf_buffer.seek(0)
+        #return pdf_buffer
+        # Ozan'ın versiyon 
+        return HttpResponse(pdf_buffer, content_type='application/pdf')
+
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
+
 
 # View Invoice (JSON Details Only)
 @csrf_exempt
