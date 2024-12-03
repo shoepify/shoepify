@@ -56,9 +56,6 @@ def signup_customer(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # login
-
-
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @authentication_classes([]) 
@@ -66,26 +63,23 @@ def login_customer(request):
     email = request.data.get('email')
     password = request.data.get('password')
 
-
     if not email or not password:
         return Response({'error': 'Please provide both email and password'},
-                         status=status.HTTP_400_BAD_REQUEST)
+                        status=status.HTTP_400_BAD_REQUEST)
 
-    # check whether customer with given email exists
+    # Check whether a customer with the given email exists
     try:
         user = Customer.objects.get(email=email)
     except Customer.DoesNotExist:
         return Response({'error': 'Invalid email'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    # check if password is correct
+    # Check if the password is correct
     if password != user.password:
-        # if wrong return error
         return Response({'error': 'Invalid password'}, status=status.HTTP_401_UNAUTHORIZED)
-    # if all good, return tokens
-    
+
+    # Handle cart transfer if guest_id is provided
     try:
-    # Get guest from session
-        guest_id = request.session.get('guest_id')
+        guest_id = request.query_params.get('guest_id')  # Retrieve guest_id from URL parameters
         if guest_id:
             guest = Guest.objects.get(pk=guest_id)
             
@@ -106,22 +100,23 @@ def login_customer(request):
             )
             
             if not created:
-                # If customer has existing cart, merge the items
+                # If customer has an existing cart, merge the items
                 merge_cart_items(guest_cart, customer_cart)
-                # Delete guest's cart after merging
+                # Delete the guest's cart after merging
                 guest_cart.delete()
             else:
-                # If this is a new customer cart, just update the ownership of guest cart
-                
+                # If this is a new customer cart, just update the ownership of the guest cart
                 guest_cart.owner_content_type = customer_content_type
                 guest_cart.owner_object_id = user.pk
                 guest_cart.save()
                 # Delete the empty customer cart that was just created
                 customer_cart.delete()
             
-            # Clean up guest user
+            # Clean up the guest user
             guest.delete()
-            request.session.pop('guest_id', None)
+        else:
+            print("No guest_id provided in the URL")
+
     except Exception as e:
         print(f"Error transferring cart: {str(e)}")
     
