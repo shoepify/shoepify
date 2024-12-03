@@ -120,25 +120,39 @@ class Product(models.Model):
             self.avg_rating = 0.0
 
     def update_popularity_score(self):
-            """
-            Calculate and update the popularity score for the product.
-            Example formula combines ratings, orders, and wishlist additions.
-            """
-            order_items_count = self.orderitem_set.count()
-            ratings_count = self.rating_set.count()
-            average_rating = self.rating_set.aggregate(models.Avg('rating_value'))['rating_value__avg'] or 0
-            wishlist_count = self.wishlistitem_set.count()
-            self.popularity_score = (order_items_count * 0.4) + (ratings_count * average_rating * 0.4) + (wishlist_count * 0.2)
+        """
+        Calculate and update the popularity score for the product.
+        Example formula combines ratings, orders, and wishlist additions.
+        """
+        # Count order items
+        order_items_count = self.orderitem_set.count()
 
-    def get_sales_volume(self):
-        return OrderItem.objects.filter(product=self).count()
+        # Count ratings and calculate the average rating
+        ratings_count = self.rating_set.count()
+        average_rating = self.rating_set.aggregate(models.Avg('rating_value'))['rating_value__avg'] or 0
 
-    def get_average_rating(self):
-        ratings = Rating.objects.filter(product=self)
-        return ratings.aggregate(models.Avg('rating_value'))['rating_value__avg'] if ratings.exists() else 0
+        # Count wishlist additions
+        wishlist_count = self.wishlistitem_set.count()
 
-    def get_wishlist_additions(self):
-        return WishlistItem.objects.filter(product=self).count()
+        # Calculate popularity score
+        self.popularity_score = (
+            (order_items_count * 0.4) +
+            (ratings_count * average_rating * 0.4) +
+            (wishlist_count * 0.2)
+        )
+
+        # Save the updated popularity score
+        self.save()
+
+        def get_sales_volume(self):
+            return OrderItem.objects.filter(product=self).count()
+
+        def get_average_rating(self):
+            ratings = Rating.objects.filter(product=self)
+            return ratings.aggregate(models.Avg('rating_value'))['rating_value__avg'] if ratings.exists() else 0
+
+        def get_wishlist_additions(self):
+            return WishlistItem.objects.filter(product=self).count()
 
 
 # Wishlist Model
