@@ -124,7 +124,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',  # Database backend
         'NAME': 'shoesite_db',          # Your MySQL database name
         'USER': 'root',         # Your MySQL username
-        'PASSWORD': '1234',     # Your MySQL password
+        'PASSWORD': 'cansql824',     # Your MySQL password
         'HOST': 'localhost',                   # Usually 'localhost' or IP of the database server
         'PORT': '3306',                        # Default MySQL port is 3306
     }
