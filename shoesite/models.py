@@ -88,7 +88,7 @@ class Product(models.Model):
     #discount = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     discount = models.ForeignKey('Discount', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     popularity_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
-    avg_rating = models.DecimalField(max_digits=5, decimal_places=2, default=0.0),
+    avg_rating = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     image_name = models.CharField(max_length=255, blank=True, null=True)  # Store the image name
 
 
