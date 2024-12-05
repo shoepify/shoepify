@@ -16,7 +16,7 @@ from shoesite.views.pm_views import signup_product_manager, login_product_manage
 from shoesite.views.sm_views import signup_sales_manager, login_sales_manager
 from .views.guest_views import home_view
 from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice
-from .views.category_views import add_category, remove_category
+#from .views.category_views import add_category, remove_category
 from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice, create_pdf, send_basic_email, create_pdf_ozan
 #from shoesite.views import login, signup
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -138,11 +138,11 @@ urlpatterns = [
     path('invoice/<int:invoice_id>/view/', view_invoice, name='view_invoice'),
     path('invoice/<int:invoice_id>/email/', send_invoice_email, name='send_invoice_email'),
     path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
-
+    
     #categories
-    path('category/add/', add_category, name='add_category'),
-    path('category/remove/<str:category_name>/', remove_category, name='remove_categories'),
-
+    #path('category/add/', add_category, name='add_category'),
+    #path('category/remove/<str:category_name>/', remove_category, name='remove_categories'),
+    
     #path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
     path('invoice/<int:invoice_id>/create-pdf/', create_pdf, name='create_pdf'),
     path('send-email/<int:customer_id>/', send_basic_email, name='send_basic_email'),

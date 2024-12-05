@@ -59,14 +59,6 @@ class Guest(models.Model):
         return f"Guest {self.guest_id}"
 
 
-class Category(models.Model):
-    name = models.CharField(max_length=100,unique=True)
-    description = models.TextField(default='No description available')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
 # Product Model
 class Product(models.Model):
 
