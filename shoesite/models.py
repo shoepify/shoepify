@@ -61,44 +61,29 @@ class Guest(models.Model):
 
 # Product Model
 class Product(models.Model):
-
     product_id = models.AutoField(primary_key=True)
     model = models.CharField(max_length=100)
     serial_number = models.CharField(max_length=100)
     stock = models.IntegerField()
-    #inventory_to_stock = models.IntegerField()
     warranty_status = models.CharField(max_length=50)
     distributor_info = models.CharField(max_length=100)
-
-    # New size attribute
-    #size = models.CharField(max_length=10)  # Adjust max_length as needed for shoe sizes
-
     description = models.TextField(default='No description available')
     category = models.CharField(max_length=100, default='Uncategorized')
     base_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-    #discount = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)  # New cost column
     discount = models.ForeignKey('Discount', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     popularity_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     avg_rating = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     image_name = models.CharField(max_length=255, blank=True, null=True)  # Store the image name
-
 
     def save(self, *args, **kwargs):
         if self.discount:
             self.price = self.base_price * (1 - self.discount.discount_rate)
         else:
             self.price = self.base_price
-        
-        # Save the product to ensure it exists in the database
         super().save(*args, **kwargs)
-        
-        # Calculate avg_rating
         self.update_avg_rating()
-
-        #super().save(*args, **kwargs)
-
-        # Save again to ensure avg_rating is updated in the database
         super().save(update_fields=['avg_rating'])
 
     def update_avg_rating(self):

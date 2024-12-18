@@ -4,9 +4,11 @@ from django.http import HttpResponse, JsonResponse
 from django.core.mail import EmailMessage, send_mail
 from io import BytesIO
 from django.shortcuts import get_object_or_404
-from shoesite.models import Invoice, Order, Customer  # Update these imports to match your actual models
+from shoesite.models import Invoice, Order, Customer, OrderItem  # Update these imports to match your actual models
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Sum
+from django.utils.dateparse import parse_date
 
 
 
@@ -182,6 +184,106 @@ def create_and_send_invoice(request, order_id):
         email.send()
     
         return JsonResponse({"message": f"Invoice #{invoice.invoice_id} created and sent to {order.customer.email}"}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+    
+
+@csrf_exempt
+def view_invoices_by_date_range(request):
+    """
+    Retrieve all invoices in a given date range.
+    """
+    try:
+        start_date = parse_date(request.GET.get('start_date'))
+        end_date = parse_date(request.GET.get('end_date'))
+
+        if not start_date or not end_date:
+            return JsonResponse({"error": "Invalid or missing date range"}, status=400)
+
+        invoices = Invoice.objects.filter(invoice_date__range=(start_date, end_date))
+        invoice_list = [
+            {
+                "invoice_id": invoice.invoice_id,
+                "order_id": invoice.order.order_id,
+                "invoice_date": invoice.invoice_date,
+                "total_amount": invoice.total_amount
+            }
+            for invoice in invoices
+        ]
+
+        return JsonResponse({"invoices": invoice_list}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+    
+
+
+@csrf_exempt
+def create_combined_pdf(request):
+    try:
+        start_date = parse_date(request.GET.get('start_date'))
+        end_date = parse_date(request.GET.get('end_date'))
+
+        if not start_date or not end_date:
+            return HttpResponse("Invalid or missing date range", status=400)
+
+        invoices = Invoice.objects.filter(invoice_date__range=(start_date, end_date))
+
+        # Prepare context
+        context = {"invoices": invoices}
+
+        # Load the HTML template
+        html_content = render_to_string("combined_invoice_template.html", context)
+
+        # Generate PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="combined_invoices.pdf"'
+        pisa_status = pisa.CreatePDF(html_content, dest=response)
+
+        if pisa_status.err:
+            return HttpResponse("Error generating PDF", status=500)
+
+        return response
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
+    
+
+@csrf_exempt
+def calculate_revenue_and_profit(request):
+    """
+    Calculate total revenue and profit/loss for a given date range.
+    """
+    from django.db.models import Sum
+
+    try:
+        # Parse start_date and end_date from GET request
+        start_date = parse_date(request.GET.get('start_date'))
+        end_date = parse_date(request.GET.get('end_date'))
+
+        if not start_date or not end_date:
+            return JsonResponse({"error": "Invalid or missing date range"}, status=400)
+
+        # Total Revenue: Sum of total_amount from orders in the given date range
+        total_revenue = Order.objects.filter(order_date__range=(start_date, end_date)) \
+                            .aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+        # Total Cost: Calculate dynamically using OrderItem and Product relationship
+        order_items = OrderItem.objects.filter(order__order_date__range=(start_date, end_date)) \
+            .select_related('product')
+
+        total_cost = sum(
+            item.quantity * item.product.cost for item in order_items if item.product and item.product.cost
+        )
+
+        # Calculate profit/loss
+        profit_loss = total_revenue - total_cost
+
+        return JsonResponse({
+            "total_revenue": total_revenue,
+            "total_cost": total_cost,
+            "profit_loss": profit_loss
+        }, status=200)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
