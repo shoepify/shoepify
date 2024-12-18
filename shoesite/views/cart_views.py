@@ -559,3 +559,39 @@ def get_all_orders(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+def cancel_order(request, order_id):
+    """
+    Cancel an existing order if it has not been delivered yet.
+    This will increase the stock of ordered items and refund the customer.
+    """
+    try:
+        # Fetch the order by ID
+        order = Order.objects.get(order_id=order_id)
+
+        # Check if the order is already delivered
+        if order.status == "Delivered":
+            return JsonResponse({"error": "Order has already been delivered and cannot be cancelled."}, status=400)
+
+        # Fetch all order items related to this order
+        order_items = OrderItem.objects.filter(order=order)
+
+        # Increase the stock of each ordered item
+        for item in order_items:
+            product = item.product
+            product.stock += item.quantity
+            product.save()
+
+        # Add the total order amount back to the customer's balance
+        customer = order.customer
+        customer.balance += order.total_amount
+        customer.save()
+
+        # Delete the order
+        order.delete()
+
+        return JsonResponse({"message": "Order successfully cancelled, stock and balance updated."}, status=200)
+
+    except Order.DoesNotExist:
+        return JsonResponse({"error": "Order not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
