@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
+from decimal import Decimal, ROUND_HALF_UP
 
 
 # Customer Model
@@ -86,19 +87,15 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         if self.discount:
-            self.price = self.base_price * (1 - self.discount.discount_rate)
+            # Ensure both operands are Decimal
+            discount_rate = Decimal(self.discount.discount_rate)
+            # Calculate price and round it to 2 decimal places to match field precision
+            self.price = (self.base_price * (Decimal('1') - discount_rate)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         else:
             self.price = self.base_price
-        
-        # Save the product to ensure it exists in the database
+
         super().save(*args, **kwargs)
-        
-        # Calculate avg_rating
         self.update_avg_rating()
-
-        #super().save(*args, **kwargs)
-
-        # Save again to ensure avg_rating is updated in the database
         super().save(update_fields=['avg_rating'])
 
     def update_avg_rating(self):
