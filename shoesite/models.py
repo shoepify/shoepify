@@ -62,28 +62,22 @@ class Guest(models.Model):
 
 # Product Model
 class Product(models.Model):
-
     product_id = models.AutoField(primary_key=True)
     model = models.CharField(max_length=100)
     serial_number = models.CharField(max_length=100)
     stock = models.IntegerField()
-    #inventory_to_stock = models.IntegerField()
     warranty_status = models.CharField(max_length=50)
     distributor_info = models.CharField(max_length=100)
-
-    # New size attribute
-    #size = models.CharField(max_length=10)  # Adjust max_length as needed for shoe sizes
-
     description = models.TextField(default='No description available')
     category = models.CharField(max_length=100, default='Uncategorized')
     base_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-    #discount = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)  # New cost column
+    profit = models.DecimalField(max_digits=10, decimal_places=2, default=0.0, editable=False)  # Add profit field
     discount = models.ForeignKey('Discount', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     popularity_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     avg_rating = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     image_name = models.CharField(max_length=255, blank=True, null=True)  # Store the image name
-
 
     def save(self, *args, **kwargs):
         if self.discount:
@@ -93,6 +87,9 @@ class Product(models.Model):
             self.price = (self.base_price * (Decimal('1') - discount_rate)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         else:
             self.price = self.base_price
+
+        # Automatically calculate the profit
+        self.profit = self.price - self.cost
 
         super().save(*args, **kwargs)
         self.update_avg_rating()
@@ -133,6 +130,13 @@ class Product(models.Model):
 
         # Save the updated popularity score
         self.save()
+
+        @property
+        def profit(self):
+            """
+            Calculate the profit as the difference between price and cost.
+            """
+            return self.price - self.cost if self.price and self.cost else None
 
         def get_sales_volume(self):
             return OrderItem.objects.filter(product=self).count()
