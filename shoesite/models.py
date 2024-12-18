@@ -16,6 +16,7 @@ class Customer(models.Model):
     email = models.EmailField(max_length=100, unique = True) # now email is supposed to be unique
     password = models.CharField(max_length=100)
     home_address = models.CharField(max_length=255)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
 
     # Override the default 'id' to refer to 'customer_id'
     id = property(lambda self: self.customer_id)

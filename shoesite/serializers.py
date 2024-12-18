@@ -24,7 +24,7 @@ class GuestSerializer(serializers.ModelSerializer):
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
-        fields = ['id', 'name', 'tax_id', 'email', 'password', 'home_address']
+        fields = ['id', 'name', 'tax_id', 'email', 'password', 'home_address', 'balance']
     
     extra_kwargs = {
         'password': {'write_only': True},  # Ensure password is only used for write operations
