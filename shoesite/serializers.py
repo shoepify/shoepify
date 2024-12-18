@@ -58,7 +58,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['product_id', 'model', 'serial_number', 'stock', 
                   'warranty_status', 'distributor_info', 'description', 'base_price', 
-                  'price', 'popularity_score', 'category', 'avg_rating', 'image_name']
+                  'price', 'popularity_score', 'category', 'avg_rating', "image_name"]
 
 
 # Shopping Cart and Cart Item Serializers

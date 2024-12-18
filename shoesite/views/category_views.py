@@ -2,13 +2,13 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
-from shoesite.models import Category, Product
+from shoesite.models import  Product
 from django.forms.models import model_to_dict
 import json
 from rest_framework.decorators import api_view, action, permission_classes
 from rest_framework.permissions import AllowAny
 
-
+'''
 @csrf_exempt
 def add_category(request, *args, **kwargs):
     try:
@@ -55,3 +55,4 @@ def remove_category(request, category_name, *args, **kwargs):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+'''
