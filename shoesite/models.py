@@ -72,6 +72,7 @@ class Product(models.Model):
     base_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)  # New cost column
+    profit = models.DecimalField(max_digits=10, decimal_places=2, default=0.0, editable=False)  # Add profit field
     discount = models.ForeignKey('Discount', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     popularity_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     avg_rating = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
@@ -82,6 +83,10 @@ class Product(models.Model):
             self.price = self.base_price * (1 - self.discount.discount_rate)
         else:
             self.price = self.base_price
+
+        # Automatically calculate the profit
+        self.profit = self.price - self.cost
+
         super().save(*args, **kwargs)
         self.update_avg_rating()
         super().save(update_fields=['avg_rating'])
@@ -121,6 +126,13 @@ class Product(models.Model):
 
         # Save the updated popularity score
         self.save()
+
+        @property
+        def profit(self):
+            """
+            Calculate the profit as the difference between price and cost.
+            """
+            return self.price - self.cost if self.price and self.cost else None
 
         def get_sales_volume(self):
             return OrderItem.objects.filter(product=self).count()
