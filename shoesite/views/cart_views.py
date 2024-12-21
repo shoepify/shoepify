@@ -586,8 +586,16 @@ def cancel_order(request, order_id):
         customer.balance += order.total_amount
         customer.save()
 
-        # Delete the order
-        order.delete()
+        # Change the order status to cancelled
+        order.status = "Cancelled"
+        order.payment_status = "Cancelled"
+        order.save()
+
+        # Update the delivery status to 'Cancelled'
+        delivery = Delivery.objects.filter(order=order).first()
+        if delivery:
+            delivery.delivery_status = "Cancelled"
+            delivery.save()
 
         return JsonResponse({"message": "Order successfully cancelled, stock and balance updated."}, status=200)
 

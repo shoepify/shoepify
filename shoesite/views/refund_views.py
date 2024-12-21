@@ -71,6 +71,11 @@ def approve_refund(request, refund_id):
             refunded_amount = refund.order_item.price_per_item * refund.order_item.quantity
             customer.balance += refunded_amount
             customer.save()
+
+            # Mark the order item as refunded
+            order_item = refund.order_item
+            order_item.refunded = True
+            order_item.save()
             
             # Delete the order item after processing
             #refund.order_item.delete()

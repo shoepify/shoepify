@@ -170,7 +170,8 @@ class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=[('Processing', 'Processing'),
                             ('In-Transit', 'In-Transit'),
-                            ('Delivered', 'Delivered')],
+                            ('Delivered', 'Delivered'),
+                            ('Cancelled', 'Cancelled')],
                             null=True,  # Allow null values
                             blank=True,  # Allow blank values in forms
                             default="NULL"  # Set default to None (interpreted as NULL in the database)
@@ -264,6 +265,7 @@ class Refund(models.Model):
     refunded_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    refunded = models.BooleanField(default=False)
     
     # ID property
     id = property(lambda self: self.refund_id)
