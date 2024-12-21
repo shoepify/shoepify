@@ -252,7 +252,26 @@ class Comment(models.Model):
     id = property(lambda self: self.comment_id)
 
 
+# Refund Model
+class Refund(models.Model):
+    refund_id = models.AutoField(primary_key=True)
+    order_item = models.OneToOneField(OrderItem, on_delete=models.CASCADE)  # One refund per order item
+    status = models.CharField(
+        max_length=20,
+        choices=[('Pending', 'Pending'), ('Approved', 'Approved'), ('Rejected', 'Rejected')],
+        default='Pending'
+    )
+    refunded_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # ID property
+    id = property(lambda self: self.refund_id)
+    
+    def __str__(self):
+        return f"Refund {self.refund_id} for Order Item {self.order_item.order_item_id}"
 
+'''
 class Refund(models.Model): # new table for refund
 
     refund_id = models.AutoField(primary_key=True)
@@ -273,8 +292,4 @@ class Refund(models.Model): # new table for refund
         else:
             self.status = 'Rejected'
             self.save()
-
-    def __str__(self):
-        return f"Refund {self.refund_id} for Order Item {self.order_item.order_item_id}"
-
-
+'''
