@@ -73,7 +73,7 @@ def approve_refund(request, refund_id):
             customer.save()
             
             # Delete the order item after processing
-            refund.order_item.delete()
+            #refund.order_item.delete()
             
             return JsonResponse({'status': 'success', 'message': 'Refund approved successfully.', 'refunded_amount': refunded_amount}, status=200)
         
@@ -120,7 +120,7 @@ def get_pending_refunds(request):
             {
                 "refund_id": refund.refund_id,
                 "order_item_id": refund.order_item.order_item_id,
-                "product_name": refund.order_item.product.name,
+                "product_model": refund.order_item.product.model,
                 "customer_name": refund.order_item.order.customer.name,
                 "order_date": refund.order_item.order.order_date.strftime("%Y-%m-%d"),
                 "quantity": refund.order_item.quantity,
