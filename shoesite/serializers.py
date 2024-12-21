@@ -116,7 +116,7 @@ class WishlistSerializer(serializers.ModelSerializer):
 class RefundSerializer(serializers.ModelSerializer):
     class Meta:
         model = Refund
-        fields = ['order_item', 'status', 'refunded_amount']
+        fields = ['id', 'refund_id', 'order_item', 'status', 'refunded_amount', 'created_at', 'updated_at']
 
 #comment serializer
 class CommentSerializer(serializers.ModelSerializer):
