@@ -124,7 +124,7 @@ def get_pending_refunds(request):
                 "customer_name": refund.order_item.order.customer.name,
                 "order_date": refund.order_item.order.order_date.strftime("%Y-%m-%d"),
                 "quantity": refund.order_item.quantity,
-                "refunded_amount": refund.refunded_amount,
+                "refund_amount": float(refund.order_item.price_per_item) * refund.order_item.quantity,  # Calculate refund amount
                 "created_at": refund.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             }
             for refund in pending_refunds
