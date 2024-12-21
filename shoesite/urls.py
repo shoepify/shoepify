@@ -9,7 +9,7 @@ from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist,
 from shoesite.views.refund_views import request_refund, approve_refund
 from shoesite.views.confirm_payment import confirm_payment
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
-from shoesite.views.discount_views import create_discount, get_discount, delete_discount
+from shoesite.views.discount_views import create_discount, get_discount, delete_discount, get_all_discounts
 from shoesite.views.comment_views import add_comment, get_comments, delete_comment, get_pending_comments, update_approval, disapprove_comment
 from shoesite.views.auth_views import login, signup, get_tokens_for_user, test_token
 from shoesite.views.customer_views import signup_customer, login_customer
@@ -153,5 +153,6 @@ urlpatterns = [
     path('create_discount/', create_discount, name='create_discount'),
     path('get_discount/<int:discount_id>/', get_discount, name='get_discount'),
     path('delete_discount/<int:discount_id>/', delete_discount, name='delete_discount'),
+    path('get_all_discounts/', get_all_discounts, name='get_all_discounts'),
 
 ]

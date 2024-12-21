@@ -71,3 +71,21 @@ def delete_discount(request, discount_id):
         "status": "success",
         "message": f"Discount with ID {discount_id} deleted and prices reverted."
     })
+
+# Get All Discounts
+def get_all_discounts(request):
+    try:
+        discounts = Discount.objects.all()
+        discount_list = [
+            {
+                "discount_id": discount.discount_id,
+                "discount_name": discount.discount_name,
+                "discount_rate": float(discount.discount_rate),
+                "start_date": discount.start_date,
+                "end_date": discount.end_date,
+            }
+            for discount in discounts
+        ]
+        return JsonResponse({"status": "success", "discounts": discount_list})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
