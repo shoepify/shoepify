@@ -6,7 +6,7 @@ from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
 from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer, check_cart, update_order_status, get_all_orders,remove_from_cart_guest,remove_from_cart_customer, cancel_order#, remove_from_cart #, order_status
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
-from shoesite.views.refund_views import request_refund, approve_refund, disapprove_refund, get_pending_refunds
+from shoesite.views.refund_views import request_refund, approve_refund, disapprove_refund, get_pending_refunds, check_order_item_refunded
 from shoesite.views.confirm_payment import confirm_payment
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
 from shoesite.views.discount_views import create_discount, get_discount, delete_discount
@@ -123,6 +123,8 @@ urlpatterns = [
     path('refund/approve/<int:refund_id>/', approve_refund, name='approve_refund'),
     path('disapprove_refund/<int:refund_id>/', disapprove_refund, name='disapprove_refund'),
     path('refunds/pending/', get_pending_refunds, name='get_pending_refunds'),
+    path('order-item/<int:order_item_id>/refunded/', check_order_item_refunded, name='check_order_item_refunded'),
+
 
 
 
