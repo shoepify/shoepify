@@ -76,6 +76,13 @@ def approve_refund(request, refund_id):
             order_item = refund.order_item
             order_item.refunded = True
             order_item.save()
+
+            if (order_item.refunded == False):
+                print("shit")
+            
+
+            if (order_item.refunded == True):
+                print("gut")
             
             # Delete the order item after processing
             #refund.order_item.delete()
@@ -140,4 +147,22 @@ def get_pending_refunds(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+def check_order_item_refunded(request, order_item_id):
+    """
+    Check whether a given order item has been refunded or not.
+    """
+    try:
+        # Fetch the order item by ID
+        order_item = get_object_or_404(OrderItem, pk=order_item_id)
+
+        # Return the refund status
+        return JsonResponse({
+            "order_item_id": order_item_id,
+            "order_item_model": order_item.product.model,
+            "order_item_quantity": order_item.quantity,
+            "refunded": order_item.refunded
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
