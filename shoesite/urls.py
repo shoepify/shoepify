@@ -1,7 +1,6 @@
 # shoesite/urls.py
-
-
 from django.urls import path, include, re_path
+from shoesite.views.category_views import add_category,delete_category, get_category
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
 from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer, check_cart, update_order_status, get_all_orders,remove_from_cart_guest,remove_from_cart_customer, cancel_order#, remove_from_cart #, order_status
@@ -148,9 +147,9 @@ urlpatterns = [
     path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
     
     #categories
-    #path('category/add/', add_category, name='add_category'),
-    #path('category/remove/<str:category_name>/', remove_category, name='remove_categories'),
-    
+    path('add-category/', add_category, name='add_category'),
+    path('delete-category/<int:category_id>/', delete_category, name='delete_category'),
+    path('get-category/<int:category_id>/', get_category, name='get_category'),
     #path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
     path('invoice/<int:invoice_id>/create-pdf/', create_pdf, name='create_pdf'),
     path('send-email/<int:customer_id>/', send_basic_email, name='send_basic_email'),
