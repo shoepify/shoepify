@@ -148,8 +148,8 @@ urlpatterns = [
     
     #categories
     path('add-category/', add_category, name='add_category'),
-    path('delete-category/<int:category_id>/', delete_category, name='delete_category'),
-    path('get-category/<int:category_id>/', get_category, name='get_category'),
+    path('delete-category/<str:name>/', delete_category, name='delete_category'),
+    path('get-category/<str:name>/', get_category, name='get_category'),
     #path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
     path('invoice/<int:invoice_id>/create-pdf/', create_pdf, name='create_pdf'),
     path('send-email/<int:customer_id>/', send_basic_email, name='send_basic_email'),

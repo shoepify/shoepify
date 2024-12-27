@@ -26,9 +26,9 @@ def add_category(request):
 
 @api_view(['DELETE'])
 @permission_classes([AllowAny])
-def delete_category(request, category_id):
+def delete_category(request, name):
     try:
-        category = Category.objects.get(id=category_id)
+        category = Category.objects.get(name=name)
         category.delete()
         return Response({"message": "Category deleted successfully."}, status=status.HTTP_200_OK)
     except Category.DoesNotExist:
@@ -37,10 +37,10 @@ def delete_category(request, category_id):
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def get_category(request, category_id):
+def get_category(request, name):
     try:
         # Fetch the category by ID
-        category = Category.objects.get(id=category_id)
+        category = Category.objects.get(name=name)
 
         # Fetch all products related to this category
         products = category.products.all()
