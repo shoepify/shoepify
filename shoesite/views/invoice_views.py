@@ -261,7 +261,7 @@ def create_combined_pdf(request):
 @csrf_exempt
 def calculate_revenue_and_profit(request):
     """
-    Calculate total revenue and profit/loss for a given date range.
+    Calculate total revenue and profit/loss for a given date range, excluding cancelled orders.
     """
     from django.db.models import Sum
 
@@ -273,13 +273,14 @@ def calculate_revenue_and_profit(request):
         if not start_date or not end_date:
             return JsonResponse({"error": "Invalid or missing date range"}, status=400)
 
-        # Total Revenue: Sum of total_amount from orders in the given date range
-        total_revenue = Order.objects.filter(order_date__range=(start_date, end_date)) \
-                            .aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        # Filter orders to exclude those with a 'Cancelled' status
+        orders = Order.objects.filter(order_date__range=(start_date, end_date)).exclude(status='Cancelled')
 
-        # Total Cost: Calculate dynamically using OrderItem and Product relationship
-        order_items = OrderItem.objects.filter(order__order_date__range=(start_date, end_date)) \
-            .select_related('product')
+        # Total Revenue: Sum of total_amount from orders in the given date range (excluding cancelled orders)
+        total_revenue = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+        # Total Cost: Calculate dynamically using OrderItem and Product relationship, for orders that are not cancelled
+        order_items = OrderItem.objects.filter(order__in=orders).select_related('product')
 
         total_cost = sum(
             item.quantity * item.product.cost for item in order_items if item.product and item.product.cost

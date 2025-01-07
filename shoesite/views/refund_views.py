@@ -25,6 +25,12 @@ def request_refund(request, order_item_id):
             # Fetch the order item and check if it exists
             order_item = get_object_or_404(OrderItem, pk=order_item_id)
             order_date = order_item.order.order_date
+            order = order_item.order  # Get the associated order
+
+            # Check if the order status is 'Delivered'
+            if order.status != 'Delivered':
+                return JsonResponse({'status': 'error', 'message': 'Refund can only be requested for delivered orders.'}, status=400)
+
             
             # Check if the request is within the 30-day refund window
             if (timezone.now().date() - order_date).days > 30:
