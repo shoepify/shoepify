@@ -6,7 +6,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from decimal import Decimal, ROUND_HALF_UP
-
+from django.core.exceptions import ValidationError
 
 # Customer Model
 class Customer(models.Model):
@@ -60,6 +60,21 @@ class Guest(models.Model):
     def __str__(self):
         return f"Guest {self.guest_id}"
 
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(default='No description available')
+
+    def clean(self):
+        if self.products.exists():
+            raise ValidationError(f"Cannot delete category '{self.name}' as it still has associated products.")
+
+    def delete(self, *args, **kwargs):
+        if self.products.exists():
+            raise ValidationError(f"Cannot delete category '{self.name}' as it still has associated products.")
+        super().delete(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 
 # Product Model
 class Product(models.Model):
@@ -70,7 +85,7 @@ class Product(models.Model):
     warranty_status = models.CharField(max_length=50)
     distributor_info = models.CharField(max_length=100)
     description = models.TextField(default='No description available')
-    category = models.CharField(max_length=100, default='Uncategorized')
+    category = models.ForeignKey('Category', on_delete=models.PROTECT, related_name='products', null=True, blank=True)
     base_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)  # New cost column
@@ -159,6 +174,7 @@ class WishlistItem(models.Model):
     wishlist_item_id = models.AutoField(primary_key=True)
     wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
 
 class Order(models.Model):  
 

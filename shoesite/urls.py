@@ -1,7 +1,6 @@
 # shoesite/urls.py
-
-
 from django.urls import path, include, re_path
+from shoesite.views.category_views import add_category,delete_category, get_category
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, create_product, get_product, update_product, delete_product, search_products
 from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer, check_cart, update_order_status, get_all_orders,remove_from_cart_guest,remove_from_cart_customer, cancel_order#, remove_from_cart #, order_status
@@ -9,7 +8,7 @@ from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist,
 from shoesite.views.refund_views import request_refund, approve_refund, disapprove_refund, get_pending_refunds, check_order_item_refunded
 from shoesite.views.confirm_payment import confirm_payment
 from shoesite.views.rating_views import add_rating, get_ratings, delete_rating
-from shoesite.views.discount_views import create_discount, get_discount, delete_discount
+from shoesite.views.discount_views import create_discount, get_discount, delete_discount, get_all_discounts
 from shoesite.views.comment_views import add_comment, get_comments, delete_comment, get_pending_comments, update_approval, disapprove_comment
 from shoesite.views.auth_views import login, signup, get_tokens_for_user, test_token
 from shoesite.views.customer_views import signup_customer, login_customer
@@ -148,9 +147,9 @@ urlpatterns = [
     path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
     
     #categories
-    #path('category/add/', add_category, name='add_category'),
-    #path('category/remove/<str:category_name>/', remove_category, name='remove_categories'),
-    
+    path('add-category/', add_category, name='add_category'),
+    path('delete-category/<str:name>/', delete_category, name='delete_category'),
+    path('get-category/<str:name>/', get_category, name='get_category'),
     #path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
     path('invoice/<int:invoice_id>/create-pdf/', create_pdf, name='create_pdf'),
     path('send-email/<int:customer_id>/', send_basic_email, name='send_basic_email'),
@@ -161,6 +160,7 @@ urlpatterns = [
     path('create_discount/', create_discount, name='create_discount'),
     path('get_discount/<int:discount_id>/', get_discount, name='get_discount'),
     path('delete_discount/<int:discount_id>/', delete_discount, name='delete_discount'),
+    path('get_all_discounts/', get_all_discounts, name='get_all_discounts'),
 
 
     # Add to urlpatterns
