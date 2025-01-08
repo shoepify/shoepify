@@ -1,8 +1,10 @@
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-from shoesite.models import Discount, Product
+from shoesite.models import Discount, Product, Wishlist, WishlistItem
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.core.mail import EmailMessage
+from django.core.mail import send_mail
 
 # Create a Discount
 @csrf_exempt
@@ -24,11 +26,14 @@ def create_discount(request):
                 end_date=end_date
             )
             
-            # Link discount to products
-            for product_id in product_ids:
-                product = Product.objects.get(product_id=product_id)
+            # Apply the discount to the specified products
+            products = Product.objects.filter(product_id__in=product_ids)
+            for product in products:
                 product.discount = discount
                 product.save()
+            
+            # Send email notifications
+            notify_customers_of_discount(discount, products)
 
             return JsonResponse({"status": "success", "discount_id": discount.discount_id})
         except Exception as e:
@@ -72,6 +77,39 @@ def delete_discount(request, discount_id):
         "message": f"Discount with ID {discount_id} deleted and prices reverted."
     })
 
+
+
+def notify_customers_of_discount(discount, products):
+    """
+    Notify customers about the newly created discount for specific products.
+    """
+    try:
+        # Find all customers with the products in their wishlists
+        product_ids = [product.product_id for product in products]
+        wishlist_items = WishlistItem.objects.filter(product_id__in=product_ids)
+        customers = set(item.wishlist.customer for item in wishlist_items)
+
+        # Prepare the email content
+        subject = f"Exclusive Discount: {discount.discount_name}"
+        message = (
+            f"Dear Customer,\n\n"
+            f"We're excited to offer you a discount on the following products:\n\n"
+            + "\n".join([f"- {product.model}" for product in products]) +
+            f"\n\nDiscount: {discount.discount_rate * 100}% off!\n"
+            f"Valid from {discount.start_date} to {discount.end_date}.\n\n"
+            f"Don't miss out! Visit our store now to take advantage of this special offer.\n\n"
+            f"Best regards,\nBag Store Team"
+        )
+        from_email = 'shoesitecs@gmail.com'
+
+        # Send emails to all relevant customers
+        for customer in customers:
+            send_mail(subject, message, from_email, [customer.email])
+            print(f"Email sent to {customer.email}")
+
+    except Exception as e:
+        print(f"Error sending discount emails: {e}")
+
 # Get All Discounts
 def get_all_discounts(request):
     try:
@@ -89,3 +127,4 @@ def get_all_discounts(request):
         return JsonResponse({"status": "success", "discounts": discount_list})
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
