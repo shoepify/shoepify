@@ -72,6 +72,30 @@ def get_category(request, name):
         return Response({"error": "Category not found."},status=status.HTTP_404_NOT_FOUND)
 
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def list_categories(request):
+    try:
+        # Fetch all categories from the database
+        categories = Category.objects.all()
+
+        # Create a list of category names and their corresponding IDs
+        category_data = [
+            {
+                "id": category.id,
+                "name": category.name
+            }
+            for category in categories
+        ]
+
+        # Return the list of categories
+        return Response({
+            "categories": category_data
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 '''
 @csrf_exempt
 def add_category(request, *args, **kwargs):
