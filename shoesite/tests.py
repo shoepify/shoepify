@@ -2,8 +2,9 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from .models import Customer, Product, ShoppingCart, CartItem, Wishlist, Comment, Rating, OrderItem, Order
+from .models import Customer, Product, ShoppingCart, CartItem, Wishlist, Comment, Rating, OrderItem, Order, Discount, Category
 from django.contrib.contenttypes.models import ContentType
+from decimal import Decimal
 
 
 class AddCommentTests(TestCase):
@@ -539,3 +540,172 @@ class SearchProductsTests(TestCase):
         response = self.client.get(self.search_products_url)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("Search query parameter 'q' is required", response.json()["error"])
+
+class CreateDiscountTests(TestCase):
+    def setUp(self):
+        # Create a Category first
+        self.category = Category.objects.create(
+            name="Footwear",
+            description="All kinds of shoes"
+        )
+
+        # Create Products and link them to the category
+        self.product1 = Product.objects.create(
+            model="Product 1",
+            serial_number="SN001",
+            stock=10,
+            warranty_status="Valid",
+            distributor_info="Distributor A",
+            base_price=50.00,
+            price=50.00,
+            category=self.category  # Link product to category
+        )
+        self.product2 = Product.objects.create(
+            model="Product 2",
+            serial_number="SN002",
+            stock=20,
+            warranty_status="Valid",
+            distributor_info="Distributor B",
+            base_price=100.00,
+            price=100.00,
+            category=self.category  # Link product to category
+        )
+
+        self.create_discount_url = reverse("create_discount")
+
+    def test_create_discount_success(self):
+        data = {
+            "discount_name": "Winter Sale",
+            "discount_rate": "0.20",  # Ensure discount_rate is a string representing a decimal
+            "start_date": "2025-01-01",
+            "end_date": "2025-01-15",
+            "product_ids": [self.product1.product_id, self.product2.product_id]
+        }
+        response = self.client.post(self.create_discount_url, data, content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Discount.objects.count(), 1)
+        self.assertEqual(
+            Product.objects.get(product_id=self.product1.product_id).discount.discount_name,
+            "Winter Sale"
+        )
+
+    def test_create_discount_missing_field(self):
+        data = {
+            "discount_name": "Winter Sale",
+            # Missing 'discount_rate'
+            "start_date": "2025-01-01",
+            "end_date": "2025-01-15"
+        }
+        response = self.client.post(self.create_discount_url, data, content_type="application/json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("message", response.json())
+        self.assertEqual(response.json()["message"], "'discount_rate'")
+        
+class GetDiscountTests(TestCase):
+    def setUp(self):
+        self.discount = Discount.objects.create(
+            discount_name="Winter Sale",
+            discount_rate=Decimal("0.20"),
+            start_date="2025-01-01",
+            end_date="2025-01-15"
+        )
+        self.get_discount_url = reverse("get_discount", kwargs={"discount_id": self.discount.discount_id})
+
+    def test_get_discount_success(self):
+        response = self.client.get(self.get_discount_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["discount"]["discount_name"], "Winter Sale")
+
+    def test_get_discount_not_found(self):
+        response = self.client.get(reverse("get_discount", kwargs={"discount_id": 9999}))
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("error", response.json())
+
+
+class DeleteDiscountTests(TestCase):
+    def setUp(self):
+        # Create a Category first
+        self.category = Category.objects.create(
+            name="Footwear",
+            description="All kinds of shoes"
+        )
+
+        # Create Products and link them to the category, ensuring base_price is a Decimal
+        self.product1 = Product.objects.create(
+            model="Product 1",
+            serial_number="SN001",
+            stock=10,
+            warranty_status="Valid",
+            distributor_info="Distributor A",
+            base_price=50.00,  # Using float directly, no change to model
+            price=50.00,  # Using float directly, no change to model
+            category=self.category  # Link product to category
+        )
+        self.product2 = Product.objects.create(
+            model="Product 2",
+            serial_number="SN002",
+            stock=20,
+            warranty_status="Valid",
+            distributor_info="Distributor B",
+            base_price=100.00,  # Using float directly, no change to model
+            price=100.00,  # Using float directly, no change to model
+            category=self.category  # Link product to category
+        )
+
+        # Now manually set the price to a Decimal before saving
+        self.product1.price = Decimal(str(self.product1.base_price))
+        self.product2.price = Decimal(str(self.product2.base_price))
+        self.product1.save()
+        self.product2.save()
+
+        # Create a Discount
+        self.discount = Discount.objects.create(
+            discount_name="Winter Sale",
+            discount_rate=Decimal("0.20"),
+            start_date="2025-01-01",
+            end_date="2025-01-15"
+        )
+
+        self.delete_discount_url = reverse("delete_discount", kwargs={"discount_id": self.discount.discount_id})
+
+    def test_delete_discount_success(self):
+        response = self.client.delete(self.delete_discount_url, content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Discount.objects.count(), 0)
+        self.assertIsNone(Product.objects.get(product_id=self.product1.product_id).discount)
+
+    def test_delete_discount_not_found(self):
+        response = self.client.delete(reverse("delete_discount", kwargs={"discount_id": 9999}), content_type="application/json")
+        self.assertEqual(response.status_code, 404)
+
+
+class GetAllDiscountTests(TestCase):
+    def setUp(self):
+        # Create discounts
+        Discount.objects.create(
+            discount_name="Winter Sale",
+            discount_rate="0.20",  # Ensure discount_rate is a string representing a decimal
+            start_date="2025-01-01",
+            end_date="2025-01-15"
+        )
+        Discount.objects.create(
+            discount_name="Spring Sale",
+            discount_rate="0.10",  # Ensure discount_rate is a string representing a decimal
+            start_date="2025-03-01",
+            end_date="2025-03-15"
+        )
+
+        self.get_all_discounts_url = reverse("get_all_discounts")
+
+    def test_get_all_discounts(self):
+        response = self.client.get(self.get_all_discounts_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["discounts"]), 2)
+
+    def test_get_all_discounts_empty(self):
+        # Delete all discounts to simulate empty data
+        Discount.objects.all().delete()
+
+        response = self.client.get(self.get_all_discounts_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["discounts"], [])
