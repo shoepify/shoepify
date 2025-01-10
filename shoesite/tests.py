@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from .models import Customer, Product, ShoppingCart, CartItem, Wishlist, Comment, Rating, OrderItem, Order, Discount, Category
+from .models import Customer, Product, ShoppingCart, CartItem, Wishlist, Comment, Rating, OrderItem, Order, Discount, Category, WishlistItem
 from django.contrib.contenttypes.models import ContentType
 from decimal import Decimal
 
@@ -709,3 +709,91 @@ class GetAllDiscountTests(TestCase):
         response = self.client.get(self.get_all_discounts_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["discounts"], [])
+
+class WishlistTests(TestCase):
+    def setUp(self):
+        # Create a Category
+        self.category = Category.objects.create(
+            name="Footwear",
+            description="All kinds of shoes"
+        )
+
+        # Create a Customer
+        self.customer = Customer.objects.create(
+            customer_id=1,
+            name="John Doe",
+            email="johndoe@example.com",
+        )
+
+        # Ensure Wishlist exists for the Customer
+        self.wishlist, created = Wishlist.objects.get_or_create(customer=self.customer)
+
+        # Create Products and link them to the category
+        self.product1 = Product.objects.create(
+            model="Product 1",
+            serial_number="SN001",
+            stock=10,
+            warranty_status="Valid",
+            distributor_info="Distributor A",
+            base_price=50.00,
+            price=50.00,
+            category=self.category
+        )
+        self.product2 = Product.objects.create(
+            model="Product 2",
+            serial_number="SN002",
+            stock=20,
+            warranty_status="Valid",
+            distributor_info="Distributor B",
+            base_price=100.00,
+            price=100.00,
+            category=self.category
+        )
+
+        # URL endpoints for testing
+        self.add_to_wishlist_url = lambda customer_id, product_id: reverse(
+            "add_to_wishlist", kwargs={"customer_id": customer_id, "product_id": product_id}
+        )
+        self.remove_from_wishlist_url = lambda customer_id, product_id: reverse(
+            "remove_from_wishlist", kwargs={"customer_id": customer_id, "product_id": product_id}
+        )
+        self.get_wishlist_url = lambda customer_id: reverse(
+            "get_wishlist", kwargs={"customer_id": customer_id}
+        )
+
+    def test_add_to_wishlist_success(self):
+        response = self.client.post(self.add_to_wishlist_url(self.customer.customer_id, self.product1.product_id))
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(WishlistItem.objects.filter(wishlist=self.wishlist, product=self.product1).count(), 1)
+
+    def test_add_to_wishlist_already_exists(self):
+        # Add the product first
+        WishlistItem.objects.create(wishlist=self.wishlist, product=self.product1)
+        response = self.client.post(self.add_to_wishlist_url(self.customer.customer_id, self.product1.product_id))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "Product already in wishlist")
+
+    def test_remove_from_wishlist_success(self):
+        # Add the product to the wishlist
+        WishlistItem.objects.create(wishlist=self.wishlist, product=self.product1)
+        response = self.client.delete(self.remove_from_wishlist_url(self.customer.customer_id, self.product1.product_id))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(WishlistItem.objects.filter(wishlist=self.wishlist, product=self.product1).count(), 0)
+
+    def test_remove_from_wishlist_not_found(self):
+        response = self.client.delete(self.remove_from_wishlist_url(self.customer.customer_id, self.product1.product_id))
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["status"], "Product not found in wishlist")
+
+    def test_get_wishlist_with_items(self):
+        # Add two products to the wishlist
+        WishlistItem.objects.create(wishlist=self.wishlist, product=self.product1)
+        WishlistItem.objects.create(wishlist=self.wishlist, product=self.product2)
+        response = self.client.get(self.get_wishlist_url(self.customer.customer_id))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["wishlist_items"]), 2)
+
+    def test_get_wishlist_empty(self):
+        response = self.client.get(self.get_wishlist_url(self.customer.customer_id))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["wishlist_items"]), 0)
