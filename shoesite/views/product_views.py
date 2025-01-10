@@ -42,7 +42,7 @@ def ProductCreate(request):
         data = json.loads(request.body)
 
         # Validate required fields
-        required_fields = ["model", "serial_number", "stock", "price", "cost"]
+        required_fields = ["model", "serial_number", "stock", "base_price", "cost"]
         for field in required_fields:
             if field not in data:
                 return JsonResponse({"error": f"'{field}' is required."}, status=400)
@@ -69,11 +69,12 @@ def ProductCreate(request):
                     "end_date": discount_data.get("end_date"),
                 },
             )
-
+        
+        base_price = Decimal(data["base_price"])
         # Convert price and cost to Decimal
-        price = Decimal(data["price"])
+        #price = Decimal(data["price"])
         cost = Decimal(data["cost"])
-        profit = price - cost  # Calculate profit
+        #profit = price - cost  # Calculate profit
 
         # Create the product
         with transaction.atomic():
@@ -86,9 +87,9 @@ def ProductCreate(request):
                 description=data.get("description", "No description available"),
                 category=category,
                 base_price=Decimal(data.get("base_price", "0.0")),  # Convert to Decimal
-                price=price,
+                price=base_price,
                 cost=cost,
-                profit=profit,
+                #profit=profit,
                 popularity_score=Decimal(data.get("popularity_score", "0.0")),  # Convert to Decimal
                 avg_rating=Decimal(data.get("avg_rating", "0.0")),  # Convert to Decimal
                 image_name=data.get("image_name", None),
