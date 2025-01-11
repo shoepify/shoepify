@@ -261,9 +261,10 @@ def create_combined_pdf(request):
 @csrf_exempt
 def calculate_revenue_and_profit(request):
     """
-    Calculate total revenue and profit/loss for a given date range, excluding cancelled orders.
+    Calculate total revenue and profit/loss for a given date range, excluding cancelled orders
+    and refunded order items.
     """
-    from django.db.models import Sum
+    from django.db.models import Sum, F
 
     try:
         # Parse start_date and end_date from GET request
@@ -276,27 +277,36 @@ def calculate_revenue_and_profit(request):
         # Filter orders to exclude those with a 'Cancelled' status
         orders = Order.objects.filter(order_date__range=(start_date, end_date)).exclude(status='Cancelled')
 
-        # Total Revenue: Sum of total_amount from orders in the given date range (excluding cancelled orders)
-        total_revenue = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        # Get all order items related to the filtered orders, excluding refunded items
+        order_items = (
+            OrderItem.objects.filter(order__in=orders, refunded=False)
+            .select_related('product')
+        )
 
-        # Total Cost: Calculate dynamically using OrderItem and Product relationship, for orders that are not cancelled
-        order_items = OrderItem.objects.filter(order__in=orders).select_related('product')
+        # Total Revenue: Sum of (quantity * price_per_item) for non-refunded items
+        total_revenue = order_items.aggregate(
+            total_revenue=Sum(F('quantity') * F('price_per_item'))
+        )['total_revenue'] or 0
 
+        # Total Cost: Sum of (quantity * product.cost) for non-refunded items
         total_cost = sum(
-            item.quantity * item.product.cost for item in order_items if item.product and item.product.cost
+            item.quantity * item.product.cost
+            for item in order_items
+            if item.product and item.product.cost
         )
 
         # Calculate profit/loss
         profit_loss = total_revenue - total_cost
 
         return JsonResponse({
-            "total_revenue": total_revenue,
-            "total_cost": total_cost,
-            "profit_loss": profit_loss
+            "total_revenue": float(total_revenue),  # Convert Decimal to float for JSON serialization
+            "total_cost": float(total_cost),
+            "profit_loss": float(profit_loss)
         }, status=200)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
 
 
 # Ensure matplotlib uses a non-interactive backend if running in a server environment

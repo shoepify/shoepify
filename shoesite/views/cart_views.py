@@ -310,7 +310,7 @@ def place_order(request, user_id):
             order_date=timezone.now(),
             total_amount=0,  # Will calculate after adding items
             discount_applied=0,
-            payment_status="Processing",
+            payment_status="Paid",
             status="Processing"  # New field to track order status
         )
 
