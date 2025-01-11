@@ -26,20 +26,19 @@ def request_refund(request, order_item_id):
             order_item = get_object_or_404(OrderItem, pk=order_item_id)
             order_date = order_item.order.order_date
             order = order_item.order  # Get the associated order
-
+   
             # Check if the order status is 'Delivered'
             if order.status != 'Delivered':
                 return JsonResponse({'status': 'error', 'message': 'Refund can only be requested for delivered orders.'}, status=400)
 
-            
             # Check if the request is within the 30-day refund window
             if (timezone.now().date() - order_date).days > 30:
                 return JsonResponse({'status': 'error', 'message': 'Refund request is past the 30-day period.'}, status=400)
-            
+
             # Ensure no existing refund request for this order item
             if Refund.objects.filter(order_item=order_item).exists():
                 return JsonResponse({'status': 'error', 'message': 'Refund request already exists for this order item.'}, status=400)
-            
+            print("check3")
             # Create a new refund request with a Pending status
             refund = Refund.objects.create(order_item=order_item, status='Pending')
             return JsonResponse({'status': 'success', 'message': 'Refund request submitted successfully.', 'refund_id': refund.refund_id}, status=201)
@@ -82,13 +81,6 @@ def approve_refund(request, refund_id):
             order_item = refund.order_item
             order_item.refunded = True
             order_item.save()
-
-            if (order_item.refunded == False):
-                print("shit")
-            
-
-            if (order_item.refunded == True):
-                print("gut")
             
             # Delete the order item after processing
             #refund.order_item.delete()
