@@ -309,6 +309,9 @@ def calculate_revenue_and_profit(request):
 
 
 
+from django.db.models import F, Sum  # Import F for dynamic field referencing
+import io  # Import for BytesIO
+
 # Ensure matplotlib uses a non-interactive backend if running in a server environment
 matplotlib.use('Agg')
 
@@ -339,24 +342,34 @@ def calculate_daily_revenue_and_profit(request):
 
         current_date = start_date
         while current_date <= end_date:
-            # Get orders for the current date
-            daily_orders = Order.objects.filter(order_date=current_date)
-            daily_total_revenue = daily_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            # Get orders for the current date, excluding cancelled orders
+            daily_orders = Order.objects.filter(order_date=current_date).exclude(status='Cancelled')
+
+            # Calculate daily revenue: Sum of (quantity * price_per_item) for non-refunded items
+            daily_order_items = OrderItem.objects.filter(order__in=daily_orders, refunded=False).select_related('product')
+            daily_total_revenue = daily_order_items.aggregate(
+                total_revenue=Sum(F('quantity') * F('price_per_item'))
+            )['total_revenue'] or 0
+
+            # Calculate daily cost: Sum of (quantity * product.cost) for non-refunded items
             daily_total_cost = sum(
-                item.quantity * item.product.cost for item in OrderItem.objects.filter(order__order_date=current_date)
-                .select_related('product') if item.product and item.product.cost
+                item.quantity * item.product.cost
+                for item in daily_order_items
+                if item.product and item.product.cost
             )
+
+            # Calculate daily profit/loss
             daily_profit_loss = daily_total_revenue - daily_total_cost
 
             # Store the data for plotting
-            daily_revenue.append(daily_total_revenue)
-            daily_profit.append(daily_profit_loss)
+            daily_revenue.append(float(daily_total_revenue))  # Convert Decimal to float
+            daily_profit.append(float(daily_profit_loss))
             dates.append(current_date)
 
             # Move to the next day
             current_date += timedelta(days=1)
 
-        # Create a plot with two y-axes (one for revenue and one for profit/loss)
+        # Plotting (unchanged)
         fig, ax1 = plt.subplots(figsize=(10, 6))
 
         # Plot the revenue data (on the left y-axis)
@@ -389,10 +402,10 @@ def calculate_daily_revenue_and_profit(request):
         # Create a response for the image
         response = HttpResponse(content_type='image/png')
         response['Content-Disposition'] = 'inline; filename="daily_revenue_and_profit_plots.png"'
-
-        response.write(img_buf.read())  # Add the combined plot
+        response.write(img_buf.read())
 
         return response
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
