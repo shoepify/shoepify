@@ -603,3 +603,49 @@ def cancel_order(request, order_id):
         return JsonResponse({"error": "Order not found."}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+@csrf_exempt
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_order_items_by_order(request, order_id):
+    """
+    Get all OrderItems for a specific Order using the order_id.
+    """
+    try:
+        # Retrieve the order by order_id or return a 404 if not found
+        order = get_object_or_404(Order, order_id=order_id)
+
+        # Retrieve all OrderItems for the given order
+        order_items = OrderItem.objects.filter(order=order).select_related('product')
+
+        if not order_items.exists():
+            return JsonResponse({"error": "No order items found for this order."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Serialize the OrderItems with details
+        order_items_data = [
+            {
+                "order_item_id": item.order_item_id,
+                "product_id": item.product.product_id,
+                "product_model": item.product.model,
+                "quantity": item.quantity,
+                "price_per_item": item.price_per_item,
+                "refunded": item.refunded,
+            }
+            for item in order_items
+        ]
+
+        # Include order details in the response
+        response_data = {
+            "order_id": order.order_id,
+            "order_date": order.order_date,
+            "total_amount": order.total_amount,
+            "discount_applied": order.discount_applied,
+            "payment_status": order.payment_status,
+            "status": order.status,
+            "order_items": order_items_data,
+        }
+
+        return JsonResponse(response_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
