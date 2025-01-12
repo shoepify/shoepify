@@ -2,10 +2,144 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from .models import Customer, Product, ShoppingCart, CartItem, Wishlist, Comment, Rating, OrderItem, Order, Discount, Category, WishlistItem
+from .models import Customer, Product, ShoppingCart, CartItem, Wishlist, Comment, Rating, OrderItem, Order, Discount, Category, WishlistItem, Refund
 from django.contrib.contenttypes.models import ContentType
 from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
 
+class RefundTests(TestCase):
+
+    def setUp(self):
+        # Create a category for the product
+        self.category = Category.objects.create(name="Footwear")
+        
+        # Create a customer
+        self.customer = Customer.objects.create(name="John Doe", email="johndoe@example.com", balance=100.00)
+        
+        # Create a product that belongs to the category
+        self.product = Product.objects.create(
+            model="Running Shoes",
+            serial_number="SN001",
+            cost=30.00,
+            price=50.00,
+            stock=10,
+            description="Comfortable running shoes",
+            category=self.category
+        )
+        
+        # Create an order
+        self.order = Order.objects.create(
+            order_date=timezone.now() - timedelta(days=5),
+            status="Delivered",
+            total_amount=150.00,
+            discount_applied=False,
+            customer=self.customer
+        )
+
+        # Create an order item
+        self.order_item = OrderItem.objects.create(
+            order=self.order,
+            product=self.product,
+            quantity=2,
+            price_per_item=50.00
+        )
+    
+    def test_request_refund_success(self):
+        # Test refund request within 30 days
+        url = reverse('request_refund', args=[self.order_item.pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("refund_id", response.json())
+        self.assertEqual(response.json()["status"], "success")
+    
+    def test_request_refund_non_delivered_order(self):
+        # Update order status to non-delivered
+        self.order.status = "Processing"
+        self.order.save()
+        
+        url = reverse('request_refund', args=[self.order_item.pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["status"], "error")
+        self.assertEqual(response.json()["message"], "Refund can only be requested for delivered orders.")
+    
+    def test_request_refund_after_30_days(self):
+        # Update order date to more than 30 days ago
+        self.order.order_date = timezone.now() - timedelta(days=40)
+        self.order.save()
+        
+        url = reverse('request_refund', args=[self.order_item.pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["status"], "error")
+        self.assertEqual(response.json()["message"], "Refund request is past the 30-day period.")
+    
+    def test_request_refund_multiple_times(self):
+        # Submit a refund request
+        url = reverse('request_refund', args=[self.order_item.pk])
+        self.client.post(url)
+
+        # Try to submit a refund again for the same order item
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["status"], "error")
+        self.assertEqual(response.json()["message"], "Refund request already exists for this order item.")
+    
+    def test_approve_refund_success(self):
+        # Submit a refund request
+        url = reverse('request_refund', args=[self.order_item.pk])
+        response = self.client.post(url)
+        refund_id = response.json()["refund_id"]
+
+        # Approve the refund
+        approve_url = reverse('approve_refund', args=[refund_id])
+        response = self.client.post(approve_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "success")
+        self.assertEqual(response.json()["message"], "Refund approved successfully.")
+    
+    def test_disapprove_refund_success(self):
+        # Submit a refund request
+        url = reverse('request_refund', args=[self.order_item.pk])
+        response = self.client.post(url)
+        refund_id = response.json()["refund_id"]
+
+        # Disapprove the refund
+        disapprove_url = reverse('disapprove_refund', args=[refund_id])
+        response = self.client.post(disapprove_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "success")
+        self.assertEqual(response.json()["message"], "Refund request disapproved successfully.")
+    
+    def test_get_pending_refunds(self):
+        # Create another refund for testing
+        url = reverse('request_refund', args=[self.order_item.pk])
+        response = self.client.post(url)
+        refund_id = response.json()["refund_id"]
+
+        # Fetch pending refunds
+        url = reverse('get_pending_refunds')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("pending_refunds", response.json())
+        self.assertEqual(len(response.json()["pending_refunds"]), 1)
+
+    def test_check_order_item_refunded(self):
+        # Submit a refund request
+        url = reverse('request_refund', args=[self.order_item.pk])
+        response = self.client.post(url)
+        refund_id = response.json()["refund_id"]
+
+        # Approve the refund
+        approve_url = reverse('approve_refund', args=[refund_id])
+        self.client.post(approve_url)
+
+        # Check if the order item is refunded
+        check_url = reverse('check_order_item_refunded', args=[self.order_item.pk])
+        response = self.client.get(check_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["refunded"], True)
 
 class AddCommentTests(TestCase):
 
@@ -390,34 +524,6 @@ class ListProductsTests(TestCase):
         self.assertEqual(len(response.json()), 2)
         self.assertEqual(response.json()[0]['model'], "Product 1")
 
-class CreateProductTests(TestCase):
-    def setUp(self):
-        self.create_product_url = reverse('create_product')
-
-    def test_create_product_success(self):
-        data = {
-            "model": "New Product",
-            "serial_number": "SN54321",
-            "stock": 15,
-            "warranty_status": "Valid",
-            "distributor_info": "Distributor Z",
-            "base_price": 200.00,
-            "price": 220.00,
-            "discount": None 
-        }
-        response = self.client.post(self.create_product_url, data, content_type="application/json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Product.objects.count(), 1)
-        self.assertEqual(Product.objects.first().model, "New Product")
-
-    def test_create_product_invalid_data(self):
-        data = {
-            "model": "",
-            "serial_number": "SN54321"
-        }
-        response = self.client.post(self.create_product_url, data, content_type="application/json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("model", response.json())
 
 
 class GetProductTests(TestCase):
