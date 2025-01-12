@@ -419,28 +419,31 @@ def complete_delivery(request, order_id):
 @permission_classes([AllowAny])
 def get_orders_by_customer(request, customer_id):
     """
-    Get all orders placed by a specific customer using their customer_id.
+    Get all orders placed by a specific customer along with their order items using customer_id.
     """
     try:
-        # Müşteriyi bul
+        # Retrieve the customer by customer_id or return a 404 if not found
         customer = get_object_or_404(Customer, customer_id=customer_id)
         
-        # Bu müşteri için oluşturulan siparişleri al
+        # Retrieve all orders for the customer
         orders = Order.objects.filter(customer=customer)
         
         if not orders.exists():
             return JsonResponse({"error": "No orders found for this customer."}, status=status.HTTP_404_NOT_FOUND)
         
-        # Siparişleri serileştir
+        # Serialize the orders with their respective order items
         orders_data = []
         for order in orders:
-            order_items = OrderItem.objects.filter(order=order)
+            # Retrieve all order items for the current order
+            order_items = OrderItem.objects.filter(order=order).select_related('product')
             order_items_data = [
                 {
+                    "order_item_id": item.order_item_id,
                     "product_id": item.product.product_id,
                     "product_model": item.product.model,
                     "quantity": item.quantity,
                     "price_per_item": item.price_per_item,
+                    "refunded": item.refunded,
                 }
                 for item in order_items
             ]
@@ -451,7 +454,7 @@ def get_orders_by_customer(request, customer_id):
                 "discount_applied": order.discount_applied,
                 "payment_status": order.payment_status,
                 "status": order.status,
-                "items": order_items_data,
+                "order_items": order_items_data,  # Include order items here
             })
         
         return JsonResponse({"orders": orders_data}, status=status.HTTP_200_OK)
