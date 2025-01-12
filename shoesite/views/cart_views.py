@@ -584,7 +584,7 @@ def cancel_order(request, order_id):
             product.stock += item.quantity
             product.save()
 
-        # Add the total order amount back to the customer's balance
+        # Refund the order total to the customer's balance
         customer = order.customer
         customer.balance += order.total_amount
         customer.save()
@@ -594,11 +594,16 @@ def cancel_order(request, order_id):
         order.payment_status = "Cancelled"
         order.save()
 
-        # Update the delivery status to 'Cancelled'
+        # Update the delivery status to 'Cancelled' if any delivery exists
         delivery = Delivery.objects.filter(order=order).first()
         if delivery:
             delivery.delivery_status = "Cancelled"
             delivery.save()
+
+        # Optionally, mark items as "returned" or adjust their status in any way needed
+        for item in order_items:
+            item.refunded = True  # Assuming you have a "refunded" field
+            item.save()
 
         return JsonResponse({"message": "Order successfully cancelled, stock and balance updated."}, status=200)
 
