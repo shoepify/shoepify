@@ -455,6 +455,8 @@ def get_orders_by_customer(request, customer_id):
                 "payment_status": order.payment_status,
                 "status": order.status,
                 "order_items": order_items_data,  # Include order items here
+                "customer_address": customer.home_address,  # Include customer's address here
+
             })
         
         return JsonResponse({"orders": orders_data}, status=status.HTTP_200_OK)
@@ -550,6 +552,7 @@ def get_all_orders(request):
             {
                 "order_id": order.order_id,
                 "customer_name": order.customer.name if order.customer else "Guest",
+                "customer_address": order.customer.home_address if order.customer else "No Address",
                 "order_date": order.order_date.strftime("%Y-%m-%d"),
                 "total_amount": order.total_amount,
                 "status": order.status,
