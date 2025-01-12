@@ -548,17 +548,26 @@ def get_all_orders(request):
         orders = Order.objects.all()
 
         # Structure the data for response
-        orders_data = [
-            {
-                "order_id": order.order_id,
-                "customer_name": order.customer.name if order.customer else "Guest",
-                "customer_address": order.customer.home_address if order.customer else "No Address",
-                "order_date": order.order_date.strftime("%Y-%m-%d"),
-                "total_amount": order.total_amount,
-                "status": order.status,
-            }
-            for order in orders
-        ]
+        orders_data = []
+        for order in orders:
+            # Get related order items for this order
+            order_items = OrderItem.objects.filter(order=order)
+
+            # Create entries for each order item
+            for item in order_items:
+                orders_data.append({
+                    "order_id": order.order_id,
+                    "customer_id": order.customer.customer_id if order.customer else None,
+                    "customer_name": order.customer.name if order.customer else "Guest",
+                    "customer_address": order.customer.home_address if order.customer else "No Address",
+                    "order_date": order.order_date.strftime("%Y-%m-%d"),
+                    "total_amount": order.total_amount,
+                    "status": order.status,
+                    "delivery_id": getattr(order.delivery_set.first(), "delivery_id", None),  # Fetch the first delivery ID if available
+                    "product_id": item.product.product_id,
+                    "quantity": item.quantity,
+                })
+
 
         return JsonResponse({"orders": orders_data}, status=200)
 
