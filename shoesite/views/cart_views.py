@@ -657,3 +657,38 @@ def get_order_items_by_order(request, order_id):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from datetime import datetime
+
+@csrf_exempt
+def update_order_date(request, order_id):
+    if request.method == 'POST':
+        try:
+            # Parse the JSON body
+            data = json.loads(request.body)
+            new_date = data.get('order_date')
+
+            # Validate the date format
+            try:
+                new_date = datetime.strptime(new_date, "%Y-%m-%d").date()
+            except ValueError:
+                return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+
+            # Get the order by ID
+            order = Order.objects.get(order_id=order_id)
+            order.order_date = new_date
+            order.save()
+
+            return JsonResponse({'message': 'Order date updated successfully.', 'order_id': order_id, 'new_date': str(new_date)}, status=200)
+
+        except Order.DoesNotExist:
+            return JsonResponse({'error': 'Order not found.'}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON body.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Only POST requests are allowed.'}, status=405)

@@ -3,7 +3,7 @@ from django.urls import path, include, re_path
 from shoesite.views.category_views import add_category,delete_category, get_category,list_categories
 from shoesite.views.customer_views import get_customer, create_customer
 from shoesite.views.product_views import list_products, ProductCreate, get_product, update_product, delete_product, search_products,update_base_price
-from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer, check_cart, update_order_status, get_all_orders,remove_from_cart_guest,remove_from_cart_customer, cancel_order, get_order_items_by_order #, remove_from_cart #, order_status
+from shoesite.views.cart_views import add_to_cart_customer,add_to_cart_guest, get_cart_customer, get_cart_guest, place_order, complete_delivery, get_orders_by_customer, check_cart, update_order_status, get_all_orders,remove_from_cart_guest,remove_from_cart_customer, cancel_order, get_order_items_by_order, update_order_date #, remove_from_cart #, order_status
 from shoesite.views.wishlist_views import add_to_wishlist, remove_from_wishlist, get_wishlist
 from shoesite.views.refund_views import request_refund, approve_refund, disapprove_refund, get_pending_refunds, check_order_item_refunded
 from shoesite.views.confirm_payment import confirm_payment
@@ -113,6 +113,7 @@ urlpatterns = [
     path('update_order_status/<int:order_id>/', update_order_status, name='update_order_status'),
     path('order/cancel/<int:order_id>/', cancel_order, name='cancel_order'),
     path('get_order_items/<int:order_id>/', get_order_items_by_order, name='get_order_items_by_order'),
+    path('orders/<int:order_id>/update_date/', update_order_date, name='update_order_date'),
 
 
 
