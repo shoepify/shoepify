@@ -9,6 +9,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
+from django.core.mail import send_mail
+
 
 
 from shoesite.serializers import CustomerSerializer, WishlistSerializer, RefundSerializer, WishlistItemSerializer, ShoppingCartSerializer, CartItemSerializer, ProductSerializer
@@ -81,6 +83,21 @@ def approve_refund(request, refund_id):
             order_item = refund.order_item
             order_item.refunded = True
             order_item.save()
+
+            # Send email notification to the customer
+            subject = "Refund Approved"
+            message = (
+                f"Dear {customer.name},\n\n"
+                f"We are pleased to inform you that your refund request for the product "
+                f"'{product.model}' has been approved.\n\n"
+                f"An amount of {refunded_amount} has been credited back to your account balance.\n\n"
+                f"Thank you for shopping with us.\n\n"
+                f"Best regards,\n"
+                f"Your Bag Store Team"
+            )
+            from_email = "shoesitecs@gmail.com"
+            recipient_list = [customer.email]
+            send_mail(subject, message, from_email, recipient_list)
             
             # Delete the order item after processing
             #refund.order_item.delete()
