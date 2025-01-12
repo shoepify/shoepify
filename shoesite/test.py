@@ -98,4 +98,5 @@ class CategoryTests(TestCase):
         response = self.client.get(self.list_categories_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("categories", response.data)
+        
         self.assertEqual(len(response.data["categories"]), 0)
