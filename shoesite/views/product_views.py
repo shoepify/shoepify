@@ -129,6 +129,54 @@ def get_product(request, product_id):
             }, status=status.HTTP_404_NOT_FOUND)
 
 
+@csrf_exempt
+def update_base_price(request, product_id):
+    if request.method == 'PUT':
+        try:
+            # Retrieve the product object
+            product = get_object_or_404(Product, product_id=product_id)
+
+            # Parse the request data
+            data = json.loads(request.body)
+            print(f"Received data: {data}")
+
+            # Ensure 'base_price' is present in the request
+            if 'base_price' not in data:
+                return JsonResponse(
+                    {'error': "The 'base_price' field is required."},
+                    status=400
+                )
+
+            # Convert base_price to Decimal
+            try:
+                base_price = Decimal(data['base_price'])
+                if base_price <= 0:
+                    raise ValueError("Base price must be a positive number.")
+            except (ValueError, TypeError, Decimal.InvalidOperation) as e:
+                return JsonResponse(
+                    {'error': f"Invalid base_price value: {str(e)}"},
+                    status=400
+                )
+
+            # Update the product's base_price
+            product.base_price = base_price
+            product.save()
+            print(f"Updated base_price for product {product_id} to {base_price}")
+
+            return JsonResponse(
+                {'message': 'Base price updated successfully', 'base_price': str(base_price)},
+                status=200
+            )
+
+        except Exception as e:
+            print(f"Error updating base_price: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse(
+        {'error': 'Method not allowed. Use PUT for updating base_price.'},
+        status=405
+    )
+
 # Update an existing product
 @csrf_exempt  # Consider removing this if not needed
 def update_product(request, product_id):
