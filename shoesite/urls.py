@@ -15,7 +15,7 @@ from shoesite.views.customer_views import signup_customer, login_customer
 from shoesite.views.pm_views import signup_product_manager, login_product_manager
 from shoesite.views.sm_views import signup_sales_manager, login_sales_manager
 from .views.guest_views import home_view
-from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice,view_invoices_by_date_range, create_combined_pdf, calculate_revenue_and_profit, calculate_daily_revenue_and_profit
+from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice,view_invoices_by_date_range, create_combined_pdf, calculate_revenue_and_profit, calculate_daily_revenue_and_profit, get_daily_revenue_and_profit
 #from .views.category_views import add_category, remove_category
 from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice, create_pdf, send_basic_email, create_pdf_ozan
 #from shoesite.views import login, signup
@@ -173,7 +173,9 @@ urlpatterns = [
     path('invoices/date-range/pdf/', create_combined_pdf, name='create_combined_pdf'),
     path('revenue/profit-loss/', calculate_revenue_and_profit, name='calculate_revenue_and_profit'),
     path('revenue/daily-revenue-profit/', calculate_daily_revenue_and_profit, name='calculate_daily_revenue_and_profit'), # plot revenue and profit chart
+    path('revenue/profit-loss/data/', get_daily_revenue_and_profit, name='get_daily_revenue_and_profit'),
 
 ]
+
 
 

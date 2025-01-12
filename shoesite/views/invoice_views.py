@@ -409,3 +409,59 @@ def calculate_daily_revenue_and_profit(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+
+@csrf_exempt
+def get_daily_revenue_and_profit(request):
+    """
+    Calculate and return daily revenue, cost, and profit/loss for all days in the database.
+    """
+    try:
+        # Get the earliest and latest order dates
+        earliest_order = Order.objects.earliest('order_date')
+        latest_order = Order.objects.latest('order_date')
+
+        if not earliest_order or not latest_order:
+            return JsonResponse({"error": "No orders available to calculate revenue and profit."}, status=404)
+
+        start_date = earliest_order.order_date
+        end_date = latest_order.order_date
+
+        # Calculate daily revenue, cost, and profit
+        data = []
+
+        current_date = start_date
+        while current_date <= end_date:
+            # Get orders for the current date, excluding cancelled orders
+            daily_orders = Order.objects.filter(order_date=current_date).exclude(status='Cancelled')
+
+            # Calculate daily revenue: Sum of (quantity * price_per_item) for non-refunded items
+            daily_order_items = OrderItem.objects.filter(order__in=daily_orders, refunded=False).select_related('product')
+            daily_total_revenue = daily_order_items.aggregate(
+                total_revenue=Sum(F('quantity') * F('price_per_item'))
+            )['total_revenue'] or 0
+
+            # Calculate daily cost: Sum of (quantity * product.cost) for non-refunded items
+            daily_total_cost = sum(
+                item.quantity * item.product.cost
+                for item in daily_order_items
+                if item.product and item.product.cost
+            )
+
+            # Calculate daily profit/loss
+            daily_profit_loss = daily_total_revenue - daily_total_cost
+
+            # Append to data list
+            data.append({
+                "date": current_date.strftime('%Y-%m-%d'),
+                "daily_revenue": float(daily_total_revenue),  # Convert Decimal to float
+                "daily_cost": float(daily_total_cost),
+                "daily_profit": float(daily_profit_loss),
+            })
+
+            # Move to the next day
+            current_date += timedelta(days=1)
+
+        return JsonResponse({"data": data}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
