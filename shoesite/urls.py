@@ -114,6 +114,8 @@ urlpatterns = [
     path('order/cancel/<int:order_id>/', cancel_order, name='cancel_order'),
     path('get_order_items/<int:order_id>/', get_order_items_by_order, name='get_order_items_by_order'),
     path('invoices/<int:invoice_id>/update_date/', update_invoice_date, name='update_invoice_date'),
+    path('orders/<int:order_id>/update_date/', update_order_date, name='update_order_date'),
+
 
 
 
