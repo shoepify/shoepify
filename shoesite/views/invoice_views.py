@@ -465,3 +465,41 @@ def get_daily_revenue_and_profit(request):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+import json
+from datetime import datetime
+
+@csrf_exempt
+def update_invoice_date(request, invoice_id):
+    if request.method == 'POST':
+        try:
+            # Parse the JSON body
+            data = json.loads(request.body)
+            new_date = data.get('invoice_date')
+
+            # Validate the date format
+            try:
+                new_date = datetime.strptime(new_date, "%Y-%m-%d").date()
+            except ValueError:
+                return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+
+            # Query using the correct field 'invoice_id'
+            invoice = Invoice.objects.get(invoice_id=invoice_id)
+            invoice.invoice_date = new_date
+            invoice.save()
+
+            return JsonResponse({
+                'message': 'Invoice date updated successfully.',
+                'invoice_id': invoice_id,
+                'new_date': str(new_date)
+            }, status=200)
+
+        except Invoice.DoesNotExist:
+            return JsonResponse({'error': 'Invoice not found.'}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON body.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Only POST requests are allowed.'}, status=405)
