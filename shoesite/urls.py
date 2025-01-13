@@ -17,7 +17,7 @@ from shoesite.views.sm_views import signup_sales_manager, login_sales_manager
 from .views.guest_views import home_view
 from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice,view_invoices_by_date_range, create_combined_pdf, calculate_revenue_and_profit, calculate_daily_revenue_and_profit, get_daily_revenue_and_profit
 #from .views.category_views import add_category, remove_category
-from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice, create_pdf, send_basic_email, create_pdf_ozan
+from shoesite.views.invoice_views import generate_pdf, send_invoice_email, create_and_send_invoice,view_invoice, create_pdf, send_basic_email, create_pdf_ozan, update_invoice_date
 #from shoesite.views import login, signup
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
@@ -113,7 +113,7 @@ urlpatterns = [
     path('update_order_status/<int:order_id>/', update_order_status, name='update_order_status'),
     path('order/cancel/<int:order_id>/', cancel_order, name='cancel_order'),
     path('get_order_items/<int:order_id>/', get_order_items_by_order, name='get_order_items_by_order'),
-    path('orders/<int:order_id>/update_date/', update_order_date, name='update_order_date'),
+    path('invoices/<int:invoice_id>/update_date/', update_invoice_date, name='update_invoice_date'),
 
 
 
@@ -150,6 +150,8 @@ urlpatterns = [
     path('invoice/<int:invoice_id>/view/', view_invoice, name='view_invoice'),
     path('invoice/<int:invoice_id>/email/', send_invoice_email, name='send_invoice_email'),
     path('invoice/order/<int:order_id>/create-send/', create_and_send_invoice, name='create_and_send_invoice'),
+    path('update-invoice-date/<int:invoice_id>/', update_invoice_date, name='update_invoice_date'),
+
     
     #categories
     path('add-category/', add_category, name='add_category'),
